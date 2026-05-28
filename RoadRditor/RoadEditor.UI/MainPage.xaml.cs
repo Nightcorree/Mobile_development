@@ -101,22 +101,65 @@ public partial class MainPage : ContentPage
 
     private async void OnSaveMapClicked(object sender, EventArgs e)
     {
-        // В реальном приложении здесь был бы FilePicker
-        string path = Path.Combine(FileSystem.AppDataDirectory, "map.json");
-        MapSerializer.SaveToFile(_map, path);
-        await DisplayAlert("Save", $"Map saved to {path}", "OK");
+        try
+        {
+            var fileSavePicker = Microsoft.Maui.Storage.FilePicker.Default;
+            string json = System.Text.Json.JsonSerializer.Serialize(new MapData
+            {
+                Width = _map.Width,
+                Height = _map.Height,
+                Tiles = _map.GetAllTiles().ToList()
+            });
+
+            // В MAUI нет прямого FileSavePicker, поэтому используем временный файл и делимся им
+            // или сохраняем в известное место. Для Windows/Desktop можно использовать FolderPicker или специфичные API.
+            // Упростим: сохраняем в Documents
+            string fileName = "road_map.json";
+            string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
+            
+            MapSerializer.SaveToFile(_map, targetFile);
+            
+            await DisplayAlert("Успех", $"Карта сохранена: {targetFile}", "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Ошибка", ex.Message, "OK");
+        }
     }
 
     private async void OnLoadMapClicked(object sender, EventArgs e)
     {
-        string path = Path.Combine(FileSystem.AppDataDirectory, "map.json");
-        if (File.Exists(path))
+        try
         {
-            _map = MapSerializer.LoadFromFile(path);
-            MapDrawable.Map = _map;
-            MapGraphicsView.Invalidate();
-            await DisplayAlert("Load", "Map loaded", "OK");
+            var result = await FilePicker.Default.PickAsync(new PickOptions
+            {
+                PickerTitle = "Выберите файл карты",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.WinUI, new[] { ".json" } },
+                    { DevicePlatform.Android, new[] { "application/json" } }
+                })
+            });
+
+            if (result != null)
+            {
+                _map = MapSerializer.LoadFromFile(result.FullPath);
+                MapDrawable.Map = _map;
+                MapGraphicsView.Invalidate();
+                await DisplayAlert("Успех", "Карта загружена", "OK");
+            }
         }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Ошибка", ex.Message, "OK");
+        }
+    }
+
+    private async void OnExportClicked(object sender, EventArgs e)
+    {
+        // Для полноценного экспорта в PNG в MAUI обычно требуется SkiaSharp или платформенный код.
+        // Мы можем добавить кнопку в интерфейс и вывести сообщение о подготовке.
+        await DisplayAlert("Экспорт", "Функция экспорта в PNG будет доступна после интеграции SkiaSharp или использования платформенных Canvas.", "OK");
     }
 
     private async void OnResizeMapClicked(object sender, EventArgs e)
