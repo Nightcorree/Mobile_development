@@ -16,15 +16,14 @@ public class TilePreviewDrawable : IDrawable
         
         if (SelectedType == TileType.Empty)
         {
-            canvas.FillColor = Colors.IndianRed;
-            canvas.FillRectangle(0, 0, size, size);
-            canvas.StrokeColor = Colors.White;
-            canvas.StrokeSize = 2;
-            canvas.DrawLine(0, 0, size, size);
-            canvas.DrawLine(size, 0, 0, size);
+            // Рисуем каменный фон
+            MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, 0, 0, size);
         }
         else
         {
+            // Сначала каменный фон
+            MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, 0, 0, size);
+            // Поверх - текстура дороги
             MainDrawable.DrawTileImage(canvas, SelectedType, 0, 0, size);
         }
     }

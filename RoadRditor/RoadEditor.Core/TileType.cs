@@ -19,5 +19,8 @@ public enum TileType
     TTypeUp = 8,
     TTypeDown = 9,
     TTypeLeft = 10,
-    TTypeRight = 11
+    TTypeRight = 11,
+    
+    // Фон
+    Stone = 12
 }

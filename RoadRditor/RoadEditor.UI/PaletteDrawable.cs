@@ -6,39 +6,49 @@ namespace RoadEditor.UI;
 
 public class PaletteDrawable : IDrawable
 {
-    public MapDrawable MainDrawable { get; set; }
+    public MapDrawable? MainDrawable { get; set; }
     
-    // Список тайлов для палитры (3x3 сетка)
+    // Сетка 4x3 из файла Тайлы.jpg
     public readonly List<TileType> PaletteTiles = new()
     {
-        TileType.TurnTopLeft, TileType.RoadVertical, TileType.TurnTopRight,
-        TileType.RoadHorizontal, TileType.Crossroad, TileType.RoadHorizontal,
-        TileType.TurnBottomLeft, TileType.RoadVertical, TileType.TurnBottomRight
+        TileType.RoadHorizontal, TileType.TurnTopLeft, TileType.Crossroad, TileType.RoadVertical,
+        TileType.TurnTopRight,   TileType.Stone,       TileType.TurnBottomLeft, TileType.TurnBottomRight,
+        TileType.TTypeRight,     TileType.TTypeDown,    TileType.TTypeUp, TileType.TTypeLeft
     };
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         if (MainDrawable == null) return;
 
-        float tileSize = dirtyRect.Width / 3f;
+        float colCount = 4f;
+        float rowCount = 3f;
+        float tileW = dirtyRect.Width / colCount;
+        float tileH = dirtyRect.Height / rowCount;
 
         for (int i = 0; i < PaletteTiles.Count; i++)
         {
-            int col = i % 3;
-            int row = i / 3;
-            float x = col * tileSize;
-            float y = row * tileSize;
+            int col = i % 4;
+            int row = i / 4;
+            float x = col * tileW;
+            float y = row * tileH;
 
-            // Сначала рисуем фон (камень)
-            MainDrawable.DrawSpritePart(canvas, 32f, 32f, 32f, x, y, tileSize);
+            if (PaletteTiles[i] == TileType.Stone || PaletteTiles[i] == TileType.Empty)
+            {
+                // Рисуем просто камень (пустой тайл в центре палитры)
+                MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, x, y, Math.Min(tileW, tileH));
+            }
+            else
+            {
+                // Сначала фон
+                MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, x, y, Math.Min(tileW, tileH));
+                // Затем дорогу
+                MainDrawable.DrawTileImage(canvas, PaletteTiles[i], x, y, Math.Min(tileW, tileH));
+            }
             
-            // Затем саму дорогу из палитры
-            MainDrawable.DrawTileImage(canvas, PaletteTiles[i], x, y, tileSize);
-            
-            // Рисуем сетку
-            canvas.StrokeColor = Colors.DarkGray;
+            // Сетка палитры
+            canvas.StrokeColor = Colors.DimGray;
             canvas.StrokeSize = 1;
-            canvas.DrawRectangle(x, y, tileSize, tileSize);
+            canvas.DrawRectangle(x, y, tileW, tileH);
         }
     }
 }

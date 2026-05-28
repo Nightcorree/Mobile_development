@@ -6,7 +6,7 @@ namespace RoadEditor.UI;
 public class MapDrawable : IDrawable
 {
     public RoadMap Map { get; set; }
-    public float TileSize { get; set; } = 40f;
+    public float TileSize { get; set; } = 80f; // Увеличил размер ячеек по умолчанию
     public float OffsetX { get; set; } = 0f;
     public float OffsetY { get; set; } = 0f;
     public float Zoom { get; set; } = 1.0f;
@@ -56,10 +56,15 @@ public class MapDrawable : IDrawable
                 {
                     // Для Empty ничего не рисуем (будет черная сетка)
                 }
+                else if (tile.Type == TileType.Stone)
+                {
+                    // Рисуем только "каменный" фон
+                    DrawSpritePart(canvas, 250f, 250f, 250f, x, y, currentTileSize);
+                }
                 else
                 {
                     // Сначала рисуем "каменный" фон под дорогой (как в эталоне)
-                    DrawSpritePart(canvas, 32f, 32f, 32f, x, y, currentTileSize);
+                    DrawSpritePart(canvas, 250f, 250f, 250f, x, y, currentTileSize);
                     
                     // Затем саму дорогу
                     DrawTileImage(canvas, tile.Type, x, y, currentTileSize);
@@ -108,21 +113,25 @@ public class MapDrawable : IDrawable
 
     private (float x, float y) GetSpriteCoordinates(TileType type) => type switch
     {
-        // Координаты в пикселях для сетки 250x250 (картинка 1000x750)
+        // Сетка 4x3 по 250px (картинка 1000x750)
+        // Ряд 1 (y=0)
         TileType.RoadHorizontal => (0, 0),
-        TileType.RoadVertical => (750, 0),
+        TileType.TurnTopLeft => (250, 0),      // ┏ (по факту в спрайте это ┓, подстроим под автотайлинг)
         TileType.Crossroad => (500, 0),
+        TileType.RoadVertical => (750, 0),
         
+        // Ряд 2 (y=250)
         TileType.TurnTopRight => (0, 250),    // ┓
-        TileType.TurnBottomRight => (500, 250), // ┛
-        TileType.TurnBottomLeft => (250, 500),  // ┗
-        TileType.TurnTopLeft => (0, 250),       // (замена, если нет ┏)
+        // (250, 250) - это фон (камни)
+        TileType.TurnBottomLeft => (500, 250), // ┗ 
+        TileType.TurnBottomRight => (750, 250), // ┛
         
-        TileType.TTypeDown => (250, 0),         // ┳
-        TileType.TTypeUp => (500, 500),         // ┻
-        TileType.TTypeRight => (750, 250),      // ┣
-        TileType.TTypeLeft => (250, 0),         // (замена)
+        // Ряд 3 (y=500)
+        TileType.TTypeRight => (0, 500),      // ┣
+        TileType.TTypeDown => (250, 500),      // ┳
+        TileType.TTypeUp => (500, 500),        // ┻
+        TileType.TTypeLeft => (750, 500),      // ┫
         
-        _ => (250, 250) // Камни (фон)
+        _ => (250, 250) // Фон
     };
 }
