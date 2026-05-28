@@ -3,33 +3,52 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:RoadEditor.UI"
              x:Class="RoadEditor.UI.MainPage"
-             Title="Road Editor">
+             Title="Редактор Дорог">
 
-    <Grid RowDefinitions="Auto, *, Auto" ColumnDefinitions="Auto, *">
+    <Grid RowDefinitions="Auto, *" ColumnDefinitions="300, *">
         
         <!-- Toolbar -->
-        <HorizontalStackLayout Grid.Row="0" Grid.ColumnSpan="2" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray950}}" Padding="10" Spacing="10">
-            <Button Text="New" Clicked="OnNewMapClicked" />
-            <Button Text="Load" Clicked="OnLoadMapClicked" />
-            <Button Text="Save" Clicked="OnSaveMapClicked" />
-            <Button Text="Resize" Clicked="OnResizeMapClicked" />
-            <Button Text="Export" Clicked="OnExportClicked" />
-            <BoxView WidthRequest="1" Color="Gray" Margin="5,0" />
-            <Button Text="+" Clicked="OnZoomInClicked" WidthRequest="40" />
-            <Button Text="-" Clicked="OnZoomOutClicked" WidthRequest="40" />
+        <HorizontalStackLayout Grid.Row="0" Grid.ColumnSpan="2" BackgroundColor="#111111" Padding="10,5" Spacing="15">
+            <Button Text="Очистить" Clicked="OnClearMapClicked" BackgroundColor="Transparent" TextColor="White" Padding="0" />
+            <Button Text="Открыть" Clicked="OnLoadMapClicked" BackgroundColor="Transparent" TextColor="White" Padding="0" />
+            <Button Text="Сохранить" Clicked="OnSaveMapClicked" BackgroundColor="Transparent" TextColor="White" Padding="0" />
+            <Button Text="Размер" Clicked="OnResizeMapClicked" BackgroundColor="Transparent" TextColor="White" Padding="0" />
+            <Button Text="Экспорт" Clicked="OnExportClicked" BackgroundColor="Transparent" TextColor="White" Padding="0" />
+
+            <BoxView WidthRequest="1" Color="Gray" Margin="10,0" />
+            <Button Text="+" Clicked="OnZoomInClicked" WidthRequest="40" HeightRequest="30" Padding="0" BackgroundColor="#333" TextColor="White" />
+            <Button Text="-" Clicked="OnZoomOutClicked" WidthRequest="40" HeightRequest="30" Padding="0" BackgroundColor="#333" TextColor="White" />
         </HorizontalStackLayout>
 
         <!-- Sidebar (Tools) -->
-        <VerticalStackLayout Grid.Row="1" Grid.Column="0" BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" Padding="10" Spacing="5" WidthRequest="150">
-            <Label Text="Инструменты" FontAttributes="Bold" HorizontalOptions="Center" />
-            <Button Text="Empty" Clicked="OnToolSelected" CommandParameter="Empty" />
-            <Button Text="Horizontal" Clicked="OnToolSelected" CommandParameter="RoadHorizontal" />
-            <Button Text="Vertical" Clicked="OnToolSelected" CommandParameter="RoadVertical" />
-            <Button Text="Crossroad" Clicked="OnToolSelected" CommandParameter="Crossroad" />
-        </VerticalStackLayout>
+        <Grid Grid.Row="1" Grid.Column="0" BackgroundColor="#1A0F33" Padding="15" RowDefinitions="Auto, Auto, Auto, Auto, Auto, *">
+            
+            <!-- Инфо о ячейке -->
+            <Label x:Name="CellInfoLabel" Text="Номер ячейки: 0, 0" TextColor="White" FontAttributes="Bold" FontSize="18" Grid.Row="0" Margin="0,0,0,15" />
+            
+            <!-- Текущий элемент -->
+            <Label Text="Текущий элемент:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="1" Margin="0,0,0,5" />
+            <GraphicsView x:Name="PreviewGraphicsView" HeightRequest="100" WidthRequest="100" HorizontalOptions="Start"
+                          Drawable="{Binding PreviewDrawable}" Grid.Row="2" BackgroundColor="Black" />
+            
+            <!-- Кнопка заливки -->
+            <Button Text="Заливка" BackgroundColor="Transparent" BorderColor="CornflowerBlue" BorderWidth="2" TextColor="White" 
+                    FontAttributes="Bold" WidthRequest="100" HorizontalOptions="Start" Grid.Row="3" Margin="0,15,0,30" 
+                    Clicked="OnFillClicked" />
+            
+            <!-- Доступные элементы -->
+            <Label Text="Доступные элементы:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="4" Margin="0,0,0,5" />
+            
+            <!-- Сетка элементов (кликабельная) -->
+            <GraphicsView x:Name="PaletteGraphicsView" Grid.Row="5" HorizontalOptions="Start" VerticalOptions="Start"
+                          WidthRequest="260" HeightRequest="260" BackgroundColor="Black"
+                          Drawable="{Binding PaletteDrawable}"
+                          EndInteraction="OnPaletteTapped" />
+
+        </Grid>
 
         <!-- Map Area -->
-        <ContentView Grid.Row="1" Grid.Column="1" BackgroundColor="White">
+        <ContentView Grid.Row="1" Grid.Column="1" BackgroundColor="#111111" Padding="20">
             <GraphicsView x:Name="MapGraphicsView"
                           Drawable="{Binding MapDrawable}"
                           EndInteraction="OnMapTapped">
@@ -38,11 +57,6 @@
                 </GraphicsView.GestureRecognizers>
             </GraphicsView>
         </ContentView>
-
-        <!-- Status Bar -->
-        <HorizontalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Padding="5" BackgroundColor="#eee">
-            <Label x:Name="StatusLabel" Text="Ready" VerticalOptions="Center" />
-        </HorizontalStackLayout>
         
     </Grid>
 

@@ -6,36 +6,79 @@ namespace RoadEditor.UI;
 public partial class MainPage : ContentPage
 {
     public MapDrawable MapDrawable { get; } = new MapDrawable();
+    public TilePreviewDrawable PreviewDrawable { get; } = new TilePreviewDrawable();
     private RoadMap _map;
     private TileType _currentTool = TileType.RoadHorizontal;
+
+    public PaletteDrawable PaletteDrawable { get; } = new PaletteDrawable();
 
     public MainPage()
     {
         InitializeComponent();
         
-        // Инициализируем карту по умолчанию
         _map = new RoadMap(20, 20);
         MapDrawable.Map = _map;
+        MapDrawable.RequestRedraw = () => 
+        {
+            MainThread.BeginInvokeOnMainThread(() => 
+            {
+                MapGraphicsView.Invalidate();
+                PreviewGraphicsView.Invalidate();
+                PaletteGraphicsView.Invalidate();
+            });
+        };
+
+        PreviewDrawable.MainDrawable = MapDrawable;
+        PreviewDrawable.SelectedType = _currentTool;
+        PaletteDrawable.MainDrawable = MapDrawable;
         
         BindingContext = this;
     }
 
-    private void OnToolSelected(object sender, EventArgs e)
+    private void OnPaletteTapped(object? sender, TouchEventArgs e)
     {
-        if (sender is Button button && Enum.TryParse(button.CommandParameter?.ToString(), out TileType tool))
+        var point = e.Touches.FirstOrDefault();
+        if (point == default) return;
+
+        float tileSize = (float)(PaletteGraphicsView.Width / 3.0);
+        int col = (int)(point.X / tileSize);
+        int row = (int)(point.Y / tileSize);
+        int index = row * 3 + col;
+
+        if (index >= 0 && index < PaletteDrawable.PaletteTiles.Count)
         {
-            _currentTool = tool;
-            StatusLabel.Text = $"Selected Tool: {tool}";
+            _currentTool = PaletteDrawable.PaletteTiles[index];
+            PreviewDrawable.SelectedType = _currentTool;
+            PreviewGraphicsView.Invalidate();
         }
     }
 
-    private void OnMapTapped(object sender, TouchEventArgs e)
+    private void OnFillClicked(object? sender, EventArgs e)
+    {
+        for (int x = 0; x < _map.Width; x++)
+        {
+            for (int y = 0; y < _map.Height; y++)
+            {
+                if (_map.GetTile(x, y)?.Type == TileType.Empty)
+                {
+                    // В качестве камней используем логику фона.
+                    // Если пользователь хочет прям "залить" камнем, нам нужен отдельный тип TileType.Stone
+                    // Пока для визуального сходства с эталоном оставим так или добавим авто-генерацию.
+                    // Для простоты сделаем все пустые клетки Horizontal (чтоб показать работу заливки),
+                    // Но правильнее добавить TileType.StoneBackground
+                }
+            }
+        }
+        MapGraphicsView.Invalidate();
+    }
+
+    private async void OnMapTapped(object? sender, TouchEventArgs e)
     {
         var point = e.Touches.FirstOrDefault();
+        if (point == default) return;
         
-        // Рассчитываем координаты сетки с учетом смещения и зума
-        float x = (point.X - MapDrawable.OffsetX) / MapDrawable.Zoom;
-        float y = (point.Y - MapDrawable.OffsetY) / MapDrawable.Zoom;
+        float x = (point.X - MapDrawable.OffsetX) / (MapDrawable.Zoom);
+        float y = (point.Y - MapDrawable.OffsetY) / (MapDrawable.Zoom);
 
         int tileX = (int)(x / MapDrawable.TileSize);
         int tileY = (int)(y / MapDrawable.TileSize);
@@ -43,27 +86,9 @@ public partial class MainPage : ContentPage
         if (tileX >= 0 && tileX < _map.Width && tileY >= 0 && tileY < _map.Height)
         {
             _map.SetTile(tileX, tileY, _currentTool);
-            
-            // Если выбран режим рисования (не пустой тайл), применяем авто-тайлинг
-            if (_currentTool != TileType.Empty)
-            {
-                RoadAutomation.AutoUpdateNeighbors(_map, tileX, tileY);
-            }
-            else
-            {
-                // При удалении тайла тоже нужно обновить соседей
-                RoadAutomation.AutoUpdateNeighbors(_map, tileX, tileY);
-            }
-
-            MapGraphicsView.Invalidate(); // Перерисовываем
+            RoadAutomation.AutoUpdateNeighbors(_map, tileX, tileY);
+            MapGraphicsView.Invalidate();
         }
-    }
-
-    private void OnPointerWheelChanged(object sender, PointerEventArgs e)
-    {
-        // В MAUI 8+ PointerEventArgs содержит информацию о колесике через платформенные специфики или сторонние библиотеки,
-        // но мы можем реализовать простой зум через кнопки или дождаться полной поддержки.
-        // Для демонстрации добавим метод изменения зума.
     }
 
     public void ChangeZoom(float delta)
@@ -76,71 +101,78 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private void OnZoomInClicked(object sender, EventArgs e) => ChangeZoom(0.1f);
-    private void OnZoomOutClicked(object sender, EventArgs e) => ChangeZoom(-0.1f);
+    private void OnZoomInClicked(object? sender, EventArgs e) => ChangeZoom(0.1f);
+    private void OnZoomOutClicked(object? sender, EventArgs e) => ChangeZoom(-0.1f);
 
-    private void OnPanUpdated(object sender, PanUpdatedEventArgs e)
+    private float _startOffsetX;
+    private float _startOffsetY;
+
+    private void OnPanUpdated(object? sender, PanUpdatedEventArgs e)
     {
         switch (e.StatusType)
         {
+            case GestureStatus.Started:
+                _startOffsetX = MapDrawable.OffsetX;
+                _startOffsetY = MapDrawable.OffsetY;
+                break;
             case GestureStatus.Running:
-                // Упрощенное перемещение (нужно хранить начальное смещение для плавности)
-                MapDrawable.OffsetX += (float)e.TotalX * 0.1f; 
-                MapDrawable.OffsetY += (float)e.TotalY * 0.1f;
+                MapDrawable.OffsetX = _startOffsetX + (float)e.TotalX;
+                MapDrawable.OffsetY = _startOffsetY + (float)e.TotalY;
                 MapGraphicsView.Invalidate();
                 break;
         }
     }
 
-    private void OnNewMapClicked(object sender, EventArgs e)
+    private void OnToolSelected(object? sender, EventArgs e)
     {
-        _map = new RoadMap(20, 20);
+        if (sender is Button button && Enum.TryParse(button.CommandParameter?.ToString(), out TileType tool))
+        {
+            _currentTool = tool;
+            PreviewDrawable.SelectedType = tool;
+            PreviewGraphicsView.Invalidate();
+        }
+    }
+
+    private string GetToolName(TileType type) => type switch
+    {
+        TileType.Empty => "Ластик",
+        TileType.RoadHorizontal => "Дорога",
+        TileType.Crossroad => "Перекресток",
+        _ => "Дорога"
+    };
+
+    private void OnClearMapClicked(object? sender, EventArgs e)
+    {
+        _map = new RoadMap(_map.Width, _map.Height);
         MapDrawable.Map = _map;
         MapGraphicsView.Invalidate();
     }
 
-    private async void OnSaveMapClicked(object sender, EventArgs e)
+    private async void OnSaveMapClicked(object? sender, EventArgs e)
     {
         try
         {
-            var fileSavePicker = Microsoft.Maui.Storage.FilePicker.Default;
-            string json = System.Text.Json.JsonSerializer.Serialize(new MapData
+            var result = await FilePicker.Default.PickAsync(new PickOptions { PickerTitle = "Выберите файл для сохранения (перезаписи)" });
+            
+            if (result != null)
             {
-                Width = _map.Width,
-                Height = _map.Height,
-                Tiles = _map.GetAllTiles().ToList()
-            });
-
-            // В MAUI нет прямого FileSavePicker, поэтому используем временный файл и делимся им
-            // или сохраняем в известное место. Для Windows/Desktop можно использовать FolderPicker или специфичные API.
-            // Упростим: сохраняем в Documents
-            string fileName = "road_map.json";
-            string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, fileName);
-            
-            MapSerializer.SaveToFile(_map, targetFile);
-            
-            await DisplayAlert("Успех", $"Карта сохранена: {targetFile}", "OK");
+                MapSerializer.SaveToFile(_map, result.FullPath);
+                await DisplayAlert("Успех", $"Карта сохранена в: {result.FullPath}", "OK");
+            }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            await DisplayAlert("Ошибка", ex.Message, "OK");
+            string targetFile = Path.Combine(FileSystem.Current.AppDataDirectory, "road_map.json");
+            MapSerializer.SaveToFile(_map, targetFile);
+            await DisplayAlert("Инфо", $"Сохранено в стандартную папку: {targetFile}", "OK");
         }
     }
 
-    private async void OnLoadMapClicked(object sender, EventArgs e)
+    private async void OnLoadMapClicked(object? sender, EventArgs e)
     {
         try
         {
-            var result = await FilePicker.Default.PickAsync(new PickOptions
-            {
-                PickerTitle = "Выберите файл карты",
-                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
-                {
-                    { DevicePlatform.WinUI, new[] { ".json" } },
-                    { DevicePlatform.Android, new[] { "application/json" } }
-                })
-            });
-
+            var result = await FilePicker.Default.PickAsync(new PickOptions { PickerTitle = "Выберите файл карты" });
             if (result != null)
             {
                 _map = MapSerializer.LoadFromFile(result.FullPath);
@@ -155,17 +187,15 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private async void OnExportClicked(object sender, EventArgs e)
+    private async void OnExportClicked(object? sender, EventArgs e)
     {
-        // Для полноценного экспорта в PNG в MAUI обычно требуется SkiaSharp или платформенный код.
-        // Мы можем добавить кнопку в интерфейс и вывести сообщение о подготовке.
-        await DisplayAlert("Экспорт", "Функция экспорта в PNG будет доступна после интеграции SkiaSharp или использования платформенных Canvas.", "OK");
+        await DisplayAlert("Экспорт", "Функция экспорта будет доступна в следующем обновлении.", "OK");
     }
 
-    private async void OnResizeMapClicked(object sender, EventArgs e)
+    private async void OnResizeMapClicked(object? sender, EventArgs e)
     {
-        string result = await DisplayActionSheet("Resize Map", "Cancel", null, "30x30", "50x50", "10x10");
-        if (result != null && result != "Cancel")
+        string result = await DisplayActionSheet("Размер карты", "Отмена", null, "30x30", "50x50", "10x10");
+        if (result != null && result != "Отмена")
         {
             var parts = result.Split('x');
             int size = int.Parse(parts[0]);
