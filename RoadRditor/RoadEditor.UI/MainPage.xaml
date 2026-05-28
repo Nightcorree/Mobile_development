@@ -21,26 +21,18 @@
         </HorizontalStackLayout>
 
         <!-- Sidebar (Tools) -->
-        <Grid Grid.Row="1" Grid.Column="0" BackgroundColor="#1A0F33" Padding="15" RowDefinitions="Auto, Auto, Auto, Auto, Auto, *">
-            
-            <!-- Инфо о ячейке -->
-            <Label x:Name="CellInfoLabel" Text="Номер ячейки: 0, 0" TextColor="White" FontAttributes="Bold" FontSize="18" Grid.Row="0" Margin="0,0,0,15" />
+        <Grid Grid.Row="1" Grid.Column="0" BackgroundColor="#1A0F33" Padding="15" RowDefinitions="Auto, Auto, Auto, *">
             
             <!-- Текущий элемент -->
-            <Label Text="Текущий элемент:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="1" Margin="0,0,0,5" />
+            <Label Text="Текущий элемент:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="0" Margin="0,0,0,5" />
             <GraphicsView x:Name="PreviewGraphicsView" HeightRequest="100" WidthRequest="100" HorizontalOptions="Start"
-                          Drawable="{Binding PreviewDrawable}" Grid.Row="2" BackgroundColor="Black" />
-            
-            <!-- Кнопка заливки -->
-            <Button Text="Заливка" BackgroundColor="Transparent" BorderColor="CornflowerBlue" BorderWidth="2" TextColor="White" 
-                    FontAttributes="Bold" WidthRequest="100" HorizontalOptions="Start" Grid.Row="3" Margin="0,15,0,30" 
-                    Clicked="OnFillClicked" />
+                          Drawable="{Binding PreviewDrawable}" Grid.Row="1" BackgroundColor="Black" Margin="0,0,0,30" />
             
             <!-- Доступные элементы -->
-            <Label Text="Доступные элементы:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="4" Margin="0,0,0,5" />
+            <Label Text="Доступные элементы:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="2" Margin="0,0,0,5" />
             
             <!-- Сетка элементов (кликабельная) -->
-            <GraphicsView x:Name="PaletteGraphicsView" Grid.Row="5" HorizontalOptions="Start" VerticalOptions="Start"
+            <GraphicsView x:Name="PaletteGraphicsView" Grid.Row="3" HorizontalOptions="Start" VerticalOptions="Start"
                           WidthRequest="260" HeightRequest="260" BackgroundColor="Black"
                           Drawable="{Binding PaletteDrawable}"
                           EndInteraction="OnPaletteTapped" />

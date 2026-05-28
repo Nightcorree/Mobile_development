@@ -54,25 +54,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private void OnFillClicked(object? sender, EventArgs e)
-    {
-        for (int x = 0; x < _map.Width; x++)
-        {
-            for (int y = 0; y < _map.Height; y++)
-            {
-                if (_map.GetTile(x, y)?.Type == TileType.Empty)
-                {
-                    // В качестве камней используем логику фона.
-                    // Если пользователь хочет прям "залить" камнем, нам нужен отдельный тип TileType.Stone
-                    // Пока для визуального сходства с эталоном оставим так или добавим авто-генерацию.
-                    // Для простоты сделаем все пустые клетки Horizontal (чтоб показать работу заливки),
-                    // Но правильнее добавить TileType.StoneBackground
-                }
-            }
-        }
-        MapGraphicsView.Invalidate();
-    }
-
     private async void OnMapTapped(object? sender, TouchEventArgs e)
     {
         var point = e.Touches.FirstOrDefault();
