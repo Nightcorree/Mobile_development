@@ -219,27 +219,19 @@ public partial class MainPage : ContentPage
     {
         try
         {
-            // Настройка размеров для экспорта
-            float exportTileSize = 100f;
-            int width = (int)(_map.Width * exportTileSize);
-            int height = (int)(_map.Height * exportTileSize);
-
-            using var surface = SkiaSharp.SKSurface.Create(new SkiaSharp.SKImageInfo(width, height));
-            var canvas = surface.Canvas;
-            canvas.Clear(SkiaSharp.SKColors.Black);
-
-            // Отрисовка через SkiaSharp требует отдельной логики, 
-            // но мы можем использовать Microsoft.Maui.Graphics.Skia, если подключим его.
-            // Упростим: для учебного проекта выведем подтверждение и сохраним заглушку-картинку,
-            // либо реализуем полноценный рендер если Skia подключена.
-            
-            await DisplayAlert("Экспорт", "Экспорт всей карты в PNG запущен. Файл появится в папке 'Загрузки'.", "OK");
-            
             string downloadsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            if (!Directory.Exists(downloadsFolder))
+                downloadsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
             string targetPath = Path.Combine(downloadsFolder, "ExportedMap.png");
+
+            // Удаляем старый файл, если он есть, чтобы не было конфликтов доступа
+            if (File.Exists(targetPath))
+                File.Delete(targetPath);
+
+            await MapExporter.ExportToPng(_map, targetPath);
             
-            // Временная имитация успеха для демонстрации (полный рендер требует ~50 строк кода Skia)
-            await DisplayAlert("Готово", $"Изображение сохранено (в демо-режиме):\n{targetPath}", "OK");
+            await DisplayAlert("Готово", $"Изображение карты успешно сохранено в Загрузки:\n{targetPath}", "OK");
         }
         catch (Exception ex)
         {
