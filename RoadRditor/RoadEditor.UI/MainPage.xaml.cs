@@ -43,9 +43,41 @@ public partial class MainPage : ContentPage
         if (tileX >= 0 && tileX < _map.Width && tileY >= 0 && tileY < _map.Height)
         {
             _map.SetTile(tileX, tileY, _currentTool);
+            
+            // Если выбран режим рисования (не пустой тайл), применяем авто-тайлинг
+            if (_currentTool != TileType.Empty)
+            {
+                RoadAutomation.AutoUpdateNeighbors(_map, tileX, tileY);
+            }
+            else
+            {
+                // При удалении тайла тоже нужно обновить соседей
+                RoadAutomation.AutoUpdateNeighbors(_map, tileX, tileY);
+            }
+
             MapGraphicsView.Invalidate(); // Перерисовываем
         }
     }
+
+    private void OnPointerWheelChanged(object sender, PointerEventArgs e)
+    {
+        // В MAUI 8+ PointerEventArgs содержит информацию о колесике через платформенные специфики или сторонние библиотеки,
+        // но мы можем реализовать простой зум через кнопки или дождаться полной поддержки.
+        // Для демонстрации добавим метод изменения зума.
+    }
+
+    public void ChangeZoom(float delta)
+    {
+        float newZoom = MapDrawable.Zoom + delta;
+        if (newZoom > 0.1f && newZoom < 5.0f)
+        {
+            MapDrawable.Zoom = newZoom;
+            MapGraphicsView.Invalidate();
+        }
+    }
+
+    private void OnZoomInClicked(object sender, EventArgs e) => ChangeZoom(0.1f);
+    private void OnZoomOutClicked(object sender, EventArgs e) => ChangeZoom(-0.1f);
 
     private void OnPanUpdated(object sender, PanUpdatedEventArgs e)
     {

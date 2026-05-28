@@ -70,6 +70,38 @@ public class MapDrawable : IDrawable
                 canvas.FillRectangle(x, y + (size - roadWidth) / 2, size, roadWidth);
                 canvas.FillRectangle(x + (size - roadWidth) / 2, y, roadWidth, size);
                 break;
+            case TileType.TurnTopLeft:
+                canvas.FillRectangle(x, y + (size - roadWidth) / 2, size / 2 + roadWidth / 2, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y, roadWidth, size / 2 + roadWidth / 2);
+                break;
+            case TileType.TurnTopRight:
+                canvas.FillRectangle(x + size / 2 - roadWidth / 2, y + (size - roadWidth) / 2, size / 2 + roadWidth / 2, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y, roadWidth, size / 2 + roadWidth / 2);
+                break;
+            case TileType.TurnBottomLeft:
+                canvas.FillRectangle(x, y + (size - roadWidth) / 2, size / 2 + roadWidth / 2, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y + size / 2 - roadWidth / 2, roadWidth, size / 2 + roadWidth / 2);
+                break;
+            case TileType.TurnBottomRight:
+                canvas.FillRectangle(x + size / 2 - roadWidth / 2, y + (size - roadWidth) / 2, size / 2 + roadWidth / 2, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y + size / 2 - roadWidth / 2, roadWidth, size / 2 + roadWidth / 2);
+                break;
+            case TileType.TTypeUp:
+                canvas.FillRectangle(x, y + (size - roadWidth) / 2, size, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y, roadWidth, size / 2 + roadWidth / 2);
+                break;
+            case TileType.TTypeDown:
+                canvas.FillRectangle(x, y + (size - roadWidth) / 2, size, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y + size / 2 - roadWidth / 2, roadWidth, size / 2 + roadWidth / 2);
+                break;
+            case TileType.TTypeLeft:
+                canvas.FillRectangle(x, y + (size - roadWidth) / 2, size / 2 + roadWidth / 2, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y, roadWidth, size);
+                break;
+            case TileType.TTypeRight:
+                canvas.FillRectangle(x + size / 2 - roadWidth / 2, y + (size - roadWidth) / 2, size / 2 + roadWidth / 2, roadWidth);
+                canvas.FillRectangle(x + (size - roadWidth) / 2, y, roadWidth, size);
+                break;
             // Другие типы добавим позже или упростим для прототипа
             default:
                 canvas.FillCircle(x + mid, y + mid, roadWidth / 2);

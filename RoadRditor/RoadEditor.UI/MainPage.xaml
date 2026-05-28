@@ -13,6 +13,9 @@
             <Button Text="Load" Clicked="OnLoadMapClicked" />
             <Button Text="Save" Clicked="OnSaveMapClicked" />
             <Button Text="Resize" Clicked="OnResizeMapClicked" />
+            <BoxView WidthRequest="1" Color="Gray" Margin="5,0" />
+            <Button Text="+" Clicked="OnZoomInClicked" WidthRequest="40" />
+            <Button Text="-" Clicked="OnZoomOutClicked" WidthRequest="40" />
         </HorizontalStackLayout>
 
         <!-- Sidebar (Tools) -->
