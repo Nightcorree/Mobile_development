@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO;
 using ApiTester.Core.Models;
 using ApiTester.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,6 +13,7 @@ namespace ApiTester.Gui.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly HttpClientService _httpClientService;
+    private const string DefaultCollectionPath = "collections.json";
 
     [ObservableProperty]
     private string _url = "{{baseUrl}}/posts/1";
@@ -43,10 +45,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel()
     {
         _httpClientService = new HttpClientService();
-        LoadDefaultData();
+        _ = LoadDataAsync();
     }
 
-    private void LoadDefaultData()
+    private async Task LoadDataAsync()
     {
         // Sample Environment
         CurrentEnvironment = new EnvironmentModel
@@ -55,6 +57,23 @@ public partial class MainWindowViewModel : ViewModelBase
             Variables = new() { { "baseUrl", "https://jsonplaceholder.typicode.com" } }
         };
 
+        if (File.Exists(DefaultCollectionPath))
+        {
+            var loaded = await FileService.LoadCollectionAsync(DefaultCollectionPath);
+            if (loaded != null)
+            {
+                Collections.Add(new CollectionViewModel(loaded));
+            }
+        }
+        else
+        {
+            LoadDefaultData();
+            await SaveCollectionsAsync();
+        }
+    }
+
+    private void LoadDefaultData()
+    {
         var sampleColl = new CollectionModel 
         { 
             Name = "Sample Collection",
@@ -91,7 +110,6 @@ public partial class MainWindowViewModel : ViewModelBase
             BodyType = "application/json"
         };
 
-        // Process variables
         var processedRequest = VariableProcessor.ProcessRequest(rawRequest, CurrentEnvironment);
 
         try
@@ -108,7 +126,22 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddRequest()
+    private async Task SaveCurrentRequest()
+    {
+        if (SelectedRequest != null)
+        {
+            SelectedRequest.UpdateFrom(Url, Method, RequestBody);
+            await SaveCollectionsAsync();
+            StatusText = "Request saved to collection";
+        }
+        else
+        {
+            StatusText = "Select a request from sidebar to save changes";
+        }
+    }
+
+    [RelayCommand]
+    private async Task AddRequest()
     {
         if (Collections.Count == 0)
         {
@@ -118,5 +151,16 @@ public partial class MainWindowViewModel : ViewModelBase
         var newReq = new RequestViewModel(new RequestModel { Name = "New Request", Method = "GET", Url = "https://" });
         Collections[0].Requests.Add(newReq);
         SelectedRequest = newReq;
+        await SaveCollectionsAsync();
+    }
+
+    private async Task SaveCollectionsAsync()
+    {
+        if (Collections.Count > 0)
+        {
+            // For now, we save only the first collection to the default path
+            var model = Collections[0].ToModel();
+            await FileService.SaveCollectionAsync(model, DefaultCollectionPath);
+        }
     }
 }

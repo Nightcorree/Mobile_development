@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using ApiTester.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -18,6 +19,15 @@ public partial class CollectionViewModel : ViewModelBase
         {
             Requests.Add(new RequestViewModel(req));
         }
+    }
+
+    public CollectionModel ToModel()
+    {
+        return new CollectionModel
+        {
+            Name = Name,
+            Requests = Requests.Select(r => r.ToModel()).ToList()
+        };
     }
 }
 
@@ -53,5 +63,12 @@ public partial class RequestViewModel : ViewModelBase
             Body = Body,
             BodyType = "application/json"
         };
+    }
+
+    public void UpdateFrom(string url, string method, string? body)
+    {
+        Url = url;
+        Method = method;
+        Body = body;
     }
 }
