@@ -55,7 +55,11 @@ public static class RoadAutomation
 
     private static bool ShouldConnect(RoadMap map, int x, int y, int nx, int ny)
     {
-        if (!IsRoad(map, nx, ny)) return false;
+        var nb = map.GetTile(nx, ny);
+        if (nb == null || nb.Type == TileType.Empty || nb.Type == TileType.Stone) return false;
+
+        var current = map.GetTile(x, y);
+        if (current == null) return false;
 
         // Направление от (x,y) к (nx,ny)
         int dx = nx - x;
@@ -63,17 +67,21 @@ public static class RoadAutomation
 
         if (dx != 0) // Попытка горизонтального соединения
         {
-            // Не соединяем, если ОБА тайла имеют вертикальных соседей (параллельные вертикальные дороги)
-            bool iHaveVert = IsRoad(map, x, y - 1) || IsRoad(map, x, y + 1);
-            bool nHaveVert = IsRoad(map, nx, ny - 1) || IsRoad(map, nx, ny + 1);
-            if (iHaveVert && nHaveVert) return false;
+            // Не соединяем горизонтально, если ОБА тайла являются "чисто вертикальными" дорогами,
+            // у которых уже есть вертикальные соседи. Это предотвращает "слипание" параллельных вертикальных дорог.
+            bool iAmVertical = current.Type == TileType.RoadVertical && (IsRoad(map, x, y - 1) || IsRoad(map, x, y + 1));
+            bool nbIsVertical = nb.Type == TileType.RoadVertical && (IsRoad(map, nx, ny - 1) || IsRoad(map, nx, ny + 1));
+            
+            if (iAmVertical && nbIsVertical) return false;
         }
         else if (dy != 0) // Попытка вертикального соединения
         {
-            // Не соединяем, если ОБА тайла имеют горизонтальных соседей (параллельные горизонтальные дороги)
-            bool iHaveHorz = IsRoad(map, x - 1, y) || IsRoad(map, x + 1, y);
-            bool nHaveHorz = IsRoad(map, nx - 1, ny) || IsRoad(map, nx + 1, ny);
-            if (iHaveHorz && nHaveHorz) return false;
+            // Не соединяем вертикально, если ОБА тайла являются "чисто горизонтальными" дорогами,
+            // у которых уже есть горизонтальные соседи.
+            bool iAmHorizontal = current.Type == TileType.RoadHorizontal && (IsRoad(map, x - 1, y) || IsRoad(map, x + 1, y));
+            bool nbIsHorizontal = nb.Type == TileType.RoadHorizontal && (IsRoad(map, nx - 1, ny) || IsRoad(map, nx + 1, ny));
+            
+            if (iAmHorizontal && nbIsHorizontal) return false;
         }
 
         return true;

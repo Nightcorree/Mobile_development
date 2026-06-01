@@ -220,8 +220,8 @@ public class MapDrawable : IDrawable
             
             // Ряд 3 (y=2h)
             TileType.TTypeRight => (0, h * 2, w, h),      
-            TileType.TTypeDown => (w, h * 2, w, h),       
-            TileType.TTypeUp => (w * 2, h * 2, w, h),     
+            TileType.TTypeUp => (w, h * 2, w, h),       
+            TileType.TTypeDown => (w * 2, h * 2, w, h),     
             TileType.TTypeLeft => (w * 3, h * 2, w, h),   
             
             _ => (w, h, w, h) // По умолчанию камень

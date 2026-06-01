@@ -159,6 +159,8 @@ public partial class MainPage : ContentPage
         int x2 = (int)MapDrawable.SelectionEnd.Value.X;
         int y2 = (int)MapDrawable.SelectionEnd.Value.Y;
 
+        HashSet<(int x, int y)> affectedTiles = new();
+
         if (_currentMode == ToolMode.DrawRect || _currentMode == ToolMode.Eraser)
         {
             int startX = Math.Min(x1, x2);
@@ -170,7 +172,8 @@ public partial class MainPage : ContentPage
             {
                 for (int y = startY; y <= endY; y++)
                 {
-                    PlaceTile(x, y, toolToUse);
+                    PlaceTile(x, y, toolToUse, false);
+                    affectedTiles.Add((x, y));
                 }
             }
         }
@@ -181,19 +184,31 @@ public partial class MainPage : ContentPage
                 int startX = Math.Min(x1, x2);
                 int endX = Math.Max(x1, x2);
                 for (int x = startX; x <= endX; x++)
-                    PlaceTile(x, y1, toolToUse);
+                {
+                    PlaceTile(x, y1, toolToUse, false);
+                    affectedTiles.Add((x, y1));
+                }
             }
             else
             {
                 int startY = Math.Min(y1, y2);
                 int endY = Math.Max(y1, y2);
                 for (int y = startY; y <= endY; y++)
-                    PlaceTile(x1, y, toolToUse);
+                {
+                    PlaceTile(x1, y, toolToUse, false);
+                    affectedTiles.Add((x1, y));
+                }
             }
+        }
+
+        // После того как все плитки расставлены, обновляем их соединения
+        foreach (var (x, y) in affectedTiles)
+        {
+            RoadAutomation.AutoUpdateNeighbors(_map, x, y);
         }
     }
 
-    private void PlaceTile(int x, int y, TileType type)
+    private void PlaceTile(int x, int y, TileType type, bool updateNeighbors = true)
     {
         if (x < 0 || y < 0) return;
 
@@ -212,8 +227,11 @@ public partial class MainPage : ContentPage
 
         _map.SetTile(x, y, type);
         
-        // Автоматически обновляем соединения для текущего тайла и его соседей
-        RoadAutomation.AutoUpdateNeighbors(_map, x, y);
+        if (updateNeighbors)
+        {
+            // Автоматически обновляем соединения для текущего тайла и его соседей
+            RoadAutomation.AutoUpdateNeighbors(_map, x, y);
+        }
     }
 
     private (int x, int y) GetTileAtPoint(Point point)
