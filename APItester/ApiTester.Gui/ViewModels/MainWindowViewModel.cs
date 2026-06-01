@@ -7,6 +7,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ApiTester.Core.Models;
 using ApiTester.Core.Services;
+using ApiTester.Gui.Views;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -37,7 +41,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _statusText = "Ready";
 
     [ObservableProperty]
-    private CollectionViewModel? _selectedCollection;
+    private object? _selectedItem;
 
     [ObservableProperty]
     private RequestViewModel? _selectedRequest;
@@ -58,6 +62,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task LoadDataAsync()
     {
+        // Load Environments
         if (File.Exists(DefaultEnvironmentsPath))
         {
             try
@@ -75,30 +80,36 @@ public partial class MainWindowViewModel : ViewModelBase
         if (Environments.Count == 0)
         {
             var defaultEnv = new EnvironmentModel { Name = "No Environment", Variables = new() };
-            var devEnv = new EnvironmentModel { Name = "Dev", Variables = new() { { "baseUrl", "https://jsonplaceholder.typicode.com" } } };
             Environments.Add(new EnvironmentViewModel(defaultEnv));
-            Environments.Add(new EnvironmentViewModel(devEnv));
             await SaveEnvironmentsAsync();
         }
 
-        CurrentEnvironment = Environments.FirstOrDefault(e => e.Name != "No Environment") ?? Environments.First();
+        CurrentEnvironment = Environments.First();
 
+        // Load Collections
         if (File.Exists(DefaultCollectionPath))
         {
-            var loaded = await FileService.LoadCollectionAsync(DefaultCollectionPath);
-            if (loaded != null)
+            try
             {
-                Collections.Add(new CollectionViewModel(loaded));
-                if (Collections[0].Requests.Count > 0)
+                var json = await File.ReadAllTextAsync(DefaultCollectionPath);
+                var models = JsonSerializer.Deserialize<List<CollectionModel>>(json);
+                if (models != null)
                 {
-                    SelectedRequest = Collections[0].Requests[0];
+                    foreach (var m in models) Collections.Add(new CollectionViewModel(m));
                 }
             }
+            catch { }
         }
-        else
+
+        if (Collections.Count == 0)
         {
             LoadDefaultData();
             await SaveCollectionsAsync();
+        }
+
+        if (Collections.Count > 0 && Collections[0].Requests.Count > 0)
+        {
+            SelectedItem = Collections[0].Requests[0];
         }
     }
 
@@ -114,7 +125,14 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         };
         Collections.Add(new CollectionViewModel(sampleColl));
-        SelectedRequest = Collections[0].Requests[0];
+    }
+
+    partial void OnSelectedItemChanged(object? value)
+    {
+        if (value is RequestViewModel req)
+        {
+            SelectedRequest = req;
+        }
     }
 
     partial void OnSelectedRequestChanged(RequestViewModel? value)
@@ -200,50 +218,131 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedRequest.UpdateFrom(Url, Method, RequestBody, Headers);
             SelectedRequest.Name = RequestName;
             await SaveCollectionsAsync();
-            StatusText = "Request saved to collection";
+            StatusText = "Saved successfully";
         }
     }
 
     [RelayCommand]
     private async Task AddRequest()
     {
-        if (Collections.Count == 0)
+        CollectionViewModel? targetCollection = null;
+
+        if (SelectedItem is CollectionViewModel coll)
         {
-            Collections.Add(new CollectionViewModel(new CollectionModel { Name = "New Collection" }));
+            targetCollection = coll;
+        }
+        else if (SelectedItem is RequestViewModel req)
+        {
+            targetCollection = Collections.FirstOrDefault(c => c.Requests.Contains(req));
+        }
+
+        targetCollection ??= Collections.FirstOrDefault();
+
+        if (targetCollection == null)
+        {
+            targetCollection = new CollectionViewModel(new CollectionModel { Name = "New Collection" });
+            Collections.Add(targetCollection);
         }
         
         var newReq = new RequestViewModel(new RequestModel { Name = "New Request", Method = "GET", Url = "https://" });
-        Collections[0].Requests.Add(newReq);
-        SelectedRequest = newReq;
+        targetCollection.Requests.Add(newReq);
+        SelectedItem = newReq;
         await SaveCollectionsAsync();
     }
 
     [RelayCommand]
     private async Task RemoveRequest(RequestViewModel request)
     {
-        foreach (var collection in Collections)
+        if (await ShowConfirmDialog($"Вы точно хотите удалить запрос \"{request.Name}\"?"))
         {
-            if (collection.Requests.Contains(request))
+            foreach (var collection in Collections)
             {
-                collection.Requests.Remove(request);
-                if (SelectedRequest == request)
+                if (collection.Requests.Contains(request))
                 {
-                    SelectedRequest = collection.Requests.FirstOrDefault();
+                    collection.Requests.Remove(request);
+                    if (SelectedRequest == request) SelectedItem = null;
+                    await SaveCollectionsAsync();
+                    StatusText = "Request deleted";
+                    break;
                 }
-                await SaveCollectionsAsync();
-                StatusText = "Request deleted";
-                break;
             }
         }
     }
 
+    [RelayCommand]
+    private async Task AddCollection()
+    {
+        var newColl = new CollectionViewModel(new CollectionModel { Name = "New Collection" });
+        Collections.Add(newColl);
+        SelectedItem = newColl;
+        await SaveCollectionsAsync();
+    }
+
+    [RelayCommand]
+    private async Task RemoveCollection(CollectionViewModel collection)
+    {
+        if (await ShowConfirmDialog($"Вы точно хотите удалить коллекцию \"{collection.Name}\" и все её запросы?"))
+        {
+            Collections.Remove(collection);
+            await SaveCollectionsAsync();
+            StatusText = "Collection deleted";
+        }
+    }
+
+    [RelayCommand]
+    private void AddVariable()
+    {
+        CurrentEnvironment?.Variables.Add(new EnvironmentVariableViewModel());
+    }
+
+    [RelayCommand]
+    private async Task RemoveVariable(EnvironmentVariableViewModel variable)
+    {
+        if (CurrentEnvironment != null && await ShowConfirmDialog($"Удалить переменную \"{variable.Key}\"?"))
+        {
+            CurrentEnvironment.Variables.Remove(variable);
+        }
+    }
+
+    private async Task<bool> ShowConfirmDialog(string message)
+    {
+        var dialog = new Window
+        {
+            Title = "Подтверждение",
+            SizeToContent = SizeToContent.WidthAndHeight,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            SystemDecorations = SystemDecorations.None,
+            TransparencyLevelHint = new[] { WindowTransparencyLevel.AcrylicBlur },
+            Background = Avalonia.Media.Brushes.Transparent
+        };
+
+        var control = new ConfirmDialog();
+        var msgBlock = control.FindControl<TextBlock>("MessageText");
+        if (msgBlock != null) msgBlock.Text = message;
+
+        var btnCancel = control.FindControl<Button>("CancelButton");
+        var btnConfirm = control.FindControl<Button>("ConfirmButton");
+
+        bool dialogResult = false;
+        if (btnCancel != null) btnCancel.Click += (_, _) => dialog.Close(false);
+        if (btnConfirm != null) btnConfirm.Click += (_, _) => dialog.Close(true);
+
+        dialog.Content = control;
+
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            dialogResult = await dialog.ShowDialog<bool>(desktop.MainWindow!);
+        }
+
+        return dialogResult;
+    }
+
     private async Task SaveCollectionsAsync()
     {
-        if (Collections.Count > 0)
-        {
-            var model = Collections[0].ToModel();
-            await FileService.SaveCollectionAsync(model, DefaultCollectionPath);
-        }
+        var models = Collections.Select(c => c.ToModel()).ToList();
+        var json = JsonSerializer.Serialize(models, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(DefaultCollectionPath, json);
     }
 
     private async Task SaveEnvironmentsAsync()
@@ -260,6 +359,25 @@ public partial class MainWindowViewModel : ViewModelBase
         Environments.Add(newEnv);
         CurrentEnvironment = newEnv;
         await SaveEnvironmentsAsync();
+    }
+
+    [RelayCommand]
+    private async Task RemoveEnvironment()
+    {
+        if (CurrentEnvironment == null || Environments.Count <= 1)
+        {
+            StatusText = "Cannot delete the last environment";
+            return;
+        }
+
+        if (await ShowConfirmDialog($"Удалить окружение \"{CurrentEnvironment.Name}\"?"))
+        {
+            var toRemove = CurrentEnvironment;
+            Environments.Remove(toRemove);
+            CurrentEnvironment = Environments.First();
+            await SaveEnvironmentsAsync();
+            StatusText = "Environment deleted";
+        }
     }
 
     [RelayCommand]

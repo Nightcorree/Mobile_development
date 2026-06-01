@@ -56,8 +56,8 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-                    <Button Command="{Binding AddEnvironmentCommand}" ToolTip.Tip="Manage Environments" Padding="8,4">
-                        <ic:SymbolIcon Symbol="Settings" FontSize="18"/>
+                    <Button Command="{Binding AddEnvironmentCommand}" ToolTip.Tip="New Environment" Padding="8,4">
+                        <ic:SymbolIcon Symbol="Add" FontSize="18"/>
                     </Button>
                 </StackPanel>
             </Grid>
@@ -66,24 +66,39 @@
         <Grid Grid.Row="1" ColumnDefinitions="300, 1, *">
             <!-- Sidebar -->
             <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
-                <Grid RowDefinitions="Auto, *">
-                    <Button Grid.Row="0" Command="{Binding AddRequestCommand}" 
-                            HorizontalAlignment="Stretch" Margin="12" Classes="accent" Padding="0,8">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                            <ic:SymbolIcon Symbol="Add" FontSize="16"/>
-                            <TextBlock Text="New Request"/>
-                        </StackPanel>
-                    </Button>
+                <Grid RowDefinitions="Auto, Auto, *">
+                    <Grid Grid.Row="0" ColumnDefinitions="*, *" Margin="12,12,12,0">
+                        <Button Grid.Column="0" Command="{Binding AddRequestCommand}" 
+                                HorizontalAlignment="Stretch" Classes="accent" Padding="0,8" Margin="0,0,5,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                <ic:SymbolIcon Symbol="Add" FontSize="16"/>
+                                <TextBlock Text="Request"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Command="{Binding AddCollectionCommand}" 
+                                HorizontalAlignment="Stretch" Padding="0,8" Margin="5,0,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                <ic:SymbolIcon Symbol="FolderAdd" FontSize="16"/>
+                                <TextBlock Text="Collection"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
                     
-                    <TreeView Grid.Row="1" ItemsSource="{Binding Collections}" 
-                              SelectedItem="{Binding SelectedRequest}"
+                    <TreeView Grid.Row="2" ItemsSource="{Binding Collections}" 
+                              SelectedItem="{Binding SelectedItem}"
                               Background="Transparent">
                         <TreeView.DataTemplates>
                             <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <ic:SymbolIcon Symbol="Folder" FontSize="16" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                </StackPanel>
+                                <Grid ColumnDefinitions="Auto, *, Auto">
+                                    <ic:SymbolIcon Grid.Column="0" Symbol="Folder" FontSize="16" Margin="0,0,8,0" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="2" 
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveCollectionCommand}" 
+                                            CommandParameter="{Binding}"
+                                            Padding="4" Background="Transparent" BorderThickness="0">
+                                        <ic:SymbolIcon Symbol="Delete" FontSize="14" Foreground="Red" Opacity="0.6"/>
+                                    </Button>
+                                </Grid>
                             </TreeDataTemplate>
                             <DataTemplate DataType="vm:RequestViewModel">
                                 <Grid ColumnDefinitions="Auto, *, Auto" Margin="0,2">
@@ -187,19 +202,41 @@
                                 </StackPanel>
                             </TabItem.Header>
                             <Grid RowDefinitions="Auto, *, Auto" Margin="0,10,0,0">
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15" Spacing="10">
-                                    <TextBlock Text="Environment Name: " VerticalAlignment="Center"/>
-                                    <TextBox Text="{Binding CurrentEnvironment.Name}" Width="250"/>
-                                </StackPanel>
-                                <DataGrid Grid.Row="1" ItemsSource="{Binding CurrentEnvironment.Variables}" AutoGenerateColumns="False"
-                                          BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Variable Key" Binding="{Binding Key}" Width="*"/>
-                                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                                <Button Grid.Row="2" Command="{Binding SaveEnvironmentsCommand}" Margin="0,8,0,0" HorizontalAlignment="Right" Classes="accent" Padding="12,6">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,15">
+                                    <TextBlock Grid.Column="0" Text="Environment Name: " VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding CurrentEnvironment.Name}" Margin="10,0,10,0"/>
+                                    <Button Grid.Column="2" Command="{Binding RemoveEnvironmentCommand}" 
+                                            ToolTip.Tip="Delete Environment" Background="Transparent" BorderThickness="0">
+                                        <ic:SymbolIcon Symbol="Delete" FontSize="18" Foreground="Red"/>
+                                    </Button>
+                                </Grid>
+                                <Grid Grid.Row="1" RowDefinitions="*, Auto">
+                                    <DataGrid Grid.Row="0" ItemsSource="{Binding CurrentEnvironment.Variables}" AutoGenerateColumns="False"
+                                              BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Variable Key" Binding="{Binding Key}" Width="*"/>
+                                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                                            <DataGridTemplateColumn Width="Auto">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <Button Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveVariableCommand}" 
+                                                                CommandParameter="{Binding}" Padding="8,4" Background="Transparent" Foreground="Red">
+                                                            <ic:SymbolIcon Symbol="Delete" FontSize="16"/>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <Button Grid.Row="1" Command="{Binding AddVariableCommand}" Margin="0,8,0,0" HorizontalAlignment="Right" Padding="8,4">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <ic:SymbolIcon Symbol="Add" FontSize="14"/>
+                                            <TextBlock Text="Add Variable"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                                <Button Grid.Row="2" Command="{Binding SaveEnvironmentsCommand}" Margin="0,12,0,0" HorizontalAlignment="Stretch" Classes="accent" Padding="12,8">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                                         <ic:SymbolIcon Symbol="Save" FontSize="14"/>
                                         <TextBlock Text="Save Environments"/>
                                     </StackPanel>
