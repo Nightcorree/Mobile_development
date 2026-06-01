@@ -3,7 +3,7 @@
         xmlns:vm="using:ApiTester.Gui.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
         x:Class="ApiTester.Gui.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
@@ -17,25 +17,53 @@
         <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SendRequestCommand}" />
     </Window.KeyBindings>
 
-    <Grid RowDefinitions="Auto, Auto, 1*, Auto, 1*, Auto" Margin="10">
-        <!-- Request Section -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,10">
-            <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
-            <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="Enter URL (https://...)" VerticalContentAlignment="Center"/>
-            <Button Grid.Column="2" Content="Send" Command="{Binding SendRequestCommand}" Margin="10,0,0,0"/>
+    <Grid ColumnDefinitions="250, 4, *">
+        <!-- Sidebar -->
+        <Grid Grid.Column="0" RowDefinitions="Auto, *">
+            <Button Grid.Row="0" Content="+ New Request" Command="{Binding AddRequestCommand}" 
+                    HorizontalAlignment="Stretch" Margin="5"/>
+            
+            <TreeView Grid.Row="1" ItemsSource="{Binding Collections}" 
+                      SelectedItem="{Binding SelectedRequest}">
+                <TreeView.DataTemplates>
+                    <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
+                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                    </TreeDataTemplate>
+                    <DataTemplate DataType="vm:RequestViewModel">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Method}" Width="45" FontSize="10" VerticalAlignment="Center" 
+                                       Foreground="Gray"/>
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </TreeView.DataTemplates>
+            </TreeView>
         </Grid>
 
-        <TextBlock Grid.Row="1" Text="Request Body (JSON):" Margin="0,0,0,5"/>
-        <TextBox Grid.Row="2" Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,0,0,10"/>
+        <!-- Splitter -->
+        <GridSplitter Grid.Column="1" Background="LightGray"/>
 
-        <!-- Response Section -->
-        <TextBlock Grid.Row="3" Text="Response:" Margin="0,10,0,5"/>
-        <TextBox Grid.Row="4" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+        <!-- Main Content -->
+        <Grid Grid.Column="2" RowDefinitions="Auto, Auto, 1*, Auto, 1*, Auto" Margin="10">
+            <!-- Request Section -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,10">
+                <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
+                <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="Enter URL (https://...)" VerticalContentAlignment="Center"/>
+                <Button Grid.Column="2" Content="Send" Command="{Binding SendRequestCommand}" Margin="10,0,0,0"/>
+            </Grid>
 
-        <!-- Status Bar -->
-        <Border Grid.Row="5" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
-             <TextBlock Text="{Binding StatusText}" FontSize="12"/>
-        </Border>
+            <TextBlock Grid.Row="1" Text="Request Body (JSON):" Margin="0,0,0,5"/>
+            <TextBox Grid.Row="2" Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,0,0,10"/>
+
+            <!-- Response Section -->
+            <TextBlock Grid.Row="3" Text="Response:" Margin="0,10,0,5"/>
+            <TextBox Grid.Row="4" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+
+            <!-- Status Bar -->
+            <Border Grid.Row="5" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
+                <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+            </Border>
+        </Grid>
     </Grid>
 
 </Window>
