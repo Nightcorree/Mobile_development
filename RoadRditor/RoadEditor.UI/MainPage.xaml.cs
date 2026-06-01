@@ -63,19 +63,43 @@ public partial class MainPage : ContentPage
 
     private void OnToolModeClicked(object? sender, EventArgs e)
     {
-        if (sender is Button button && Enum.TryParse(button.CommandParameter?.ToString(), out ToolMode mode))
+        var view = sender as VisualElement;
+        var parent = view?.Parent as FlexLayout;
+        var commandParam = (sender as Button)?.CommandParameter ?? (sender as ImageButton)?.CommandParameter;
+
+        if (view != null && parent != null && Enum.TryParse(commandParam?.ToString(), out ToolMode mode))
         {
             _currentMode = mode;
             MapDrawable.CurrentMode = mode;
 
-            foreach (var child in ((FlexLayout)button.Parent).Children)
+            foreach (var child in parent.Children)
             {
-                if (child is Button b)
+                if (child is VisualElement ve)
                 {
-                    b.BackgroundColor = b == button ? Color.FromArgb("#5E35B1") : Color.FromArgb("#333");
+                    ve.BackgroundColor = ve == view ? Color.FromArgb("#5E35B1") : Color.FromArgb("#333");
                 }
             }
         }
+    }
+
+    private void OnMapGraphicsViewLoaded(object? sender, EventArgs e)
+    {
+        CenterMap();
+    }
+
+    private void CenterMap()
+    {
+        if (_map == null || MapGraphicsView.Width <= 0) return;
+
+        // Рассчитываем размеры карты в пикселях с учетом текущего масштаба
+        float mapPixelWidth = _map.Width * MapDrawable.TileSize * MapDrawable.Zoom;
+        float mapPixelHeight = _map.Height * MapDrawable.TileSize * MapDrawable.Zoom;
+
+        // Центрируем: (Размер области - Размер карты) / 2
+        MapDrawable.OffsetX = (float)(MapGraphicsView.Width - mapPixelWidth) / 2f;
+        MapDrawable.OffsetY = (float)(MapGraphicsView.Height - mapPixelHeight) / 2f;
+        
+        MapGraphicsView.Invalidate();
     }
 
     private void OnMapInteractionStarted(object? sender, TouchEventArgs e)

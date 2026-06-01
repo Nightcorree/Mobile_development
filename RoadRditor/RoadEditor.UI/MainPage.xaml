@@ -16,8 +16,8 @@
             <Button Text="Экспорт" Clicked="OnExportClicked" BackgroundColor="Transparent" TextColor="White" Padding="0" />
 
             <BoxView WidthRequest="1" Color="Gray" Margin="10,0" />
-            <Button Text="+" Clicked="OnZoomInClicked" WidthRequest="40" HeightRequest="30" Padding="0" BackgroundColor="#333" TextColor="White" />
-            <Button Text="-" Clicked="OnZoomOutClicked" WidthRequest="40" HeightRequest="30" Padding="0" BackgroundColor="#333" TextColor="White" />
+            <Button Clicked="OnZoomInClicked" Text="+" FontSize="18" TextColor="White" FontAttributes="Bold" WidthRequest="40" HeightRequest="30" Padding="0" BackgroundColor="#333" />
+            <Button Clicked="OnZoomOutClicked" Text="-" FontSize="18" TextColor="White" FontAttributes="Bold" WidthRequest="40" HeightRequest="30" Padding="0" BackgroundColor="#333" />
         </HorizontalStackLayout>
 
         <!-- Sidebar (Tools) -->
@@ -26,10 +26,10 @@
             <!-- Режимы работы -->
             <Label Text="Инструмент:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="0" Margin="0,0,0,10" />
             <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="Start" Margin="0,0,0,20">
-                <Button Text="🖐️" Clicked="OnToolModeClicked" CommandParameter="Navigate" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Навигация" />
-                <Button Text="🟦" Clicked="OnToolModeClicked" CommandParameter="DrawRect" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#5E35B1" CornerRadius="5" ToolTipProperties.Text="Область / Точка" />
-                <Button Text="📏" Clicked="OnToolModeClicked" CommandParameter="DrawLine" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Линия" />
-                <Button Text="🧽" Clicked="OnToolModeClicked" CommandParameter="Eraser" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Ластик" />
+                <Button Clicked="OnToolModeClicked" CommandParameter="Navigate" Text="🖐" FontSize="20" TextColor="White" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Навигация" />
+                <Button Clicked="OnToolModeClicked" CommandParameter="DrawRect" Text="■" FontSize="20" TextColor="White" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#5E35B1" CornerRadius="5" ToolTipProperties.Text="Область / Точка" />
+                <Button Clicked="OnToolModeClicked" CommandParameter="DrawLine" Text="—" FontSize="20" TextColor="White" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Линия" />
+                <Button Clicked="OnToolModeClicked" CommandParameter="Eraser" Text="✕" FontSize="20" TextColor="White" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Ластик" />
             </FlexLayout>
 
             <!-- Текущий элемент -->
@@ -52,6 +52,7 @@
         <ContentView Grid.Row="1" Grid.Column="1" BackgroundColor="#111111" Padding="20">
             <GraphicsView x:Name="MapGraphicsView"
                           Drawable="{Binding MapDrawable}"
+                          Loaded="OnMapGraphicsViewLoaded"
                           StartInteraction="OnMapInteractionStarted"
                           DragInteraction="OnMapInteractionDragged"
                           EndInteraction="OnMapInteractionEnded">
