@@ -1,0 +1,12 @@
+[
+  {
+    "Name": "No Environment",
+    "Variables": {}
+  },
+  {
+    "Name": "Dev",
+    "Variables": {
+      "baseUrl": "https://jsonplaceholder.typicode.com"
+    }
+  }
+]

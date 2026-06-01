@@ -3,15 +3,28 @@
         xmlns:vm="using:ApiTester.Gui.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+        xmlns:ic="using:FluentIcons.Avalonia.Fluent"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
         x:Class="ApiTester.Gui.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="Mini-Postman (ApiTester)">
+        Title="Mini-Postman (ApiTester)"
+        Background="{DynamicResource SystemRegionBrush}">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
+
+    <Window.Styles>
+        <Style Selector="Button.accent">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColorLight1}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </Window.Styles>
 
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SendRequestCommand}" />
@@ -20,65 +33,111 @@
 
     <Grid RowDefinitions="Auto, *">
         <!-- Top Toolbar -->
-        <Border Grid.Row="0" Background="#F3F3F3" Padding="5" BorderBrush="LightGray" BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Text="Environment:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <ComboBox ItemsSource="{Binding Environments}" SelectedItem="{Binding CurrentEnvironment}" Width="200">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}"/>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                <Button Content="⚙" Command="{Binding AddEnvironmentCommand}" Margin="5,0,0,0" ToolTip.Tip="Manage Environments"/>
-            </StackPanel>
+        <Border Grid.Row="0" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                Padding="12,8" 
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto, *, Auto">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <ic:SymbolIcon Symbol="Send" FontSize="20" Foreground="{DynamicResource SystemAccentColor}"/>
+                    <TextBlock Text="Mini-Postman" VerticalAlignment="Center" FontWeight="Bold" FontSize="16"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="Environment:" VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <ComboBox ItemsSource="{Binding Environments}" SelectedItem="{Binding CurrentEnvironment}" Width="200">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Command="{Binding AddEnvironmentCommand}" ToolTip.Tip="Manage Environments" Padding="8,4">
+                        <ic:SymbolIcon Symbol="Settings" FontSize="18"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <Grid Grid.Row="1" ColumnDefinitions="250, 4, *">
+        <Grid Grid.Row="1" ColumnDefinitions="280, 1, *">
             <!-- Sidebar -->
-            <Grid Grid.Column="0" RowDefinitions="Auto, *">
-                <Button Grid.Row="0" Content="+ New Request" Command="{Binding AddRequestCommand}" 
-                        HorizontalAlignment="Stretch" Margin="5"/>
-                
-                <TreeView Grid.Row="1" ItemsSource="{Binding Collections}" 
-                          SelectedItem="{Binding SelectedRequest}">
-                    <TreeView.DataTemplates>
-                        <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
-                            <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                        </TreeDataTemplate>
-                        <DataTemplate DataType="vm:RequestViewModel">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Method}" Width="45" FontSize="10" VerticalAlignment="Center" 
-                                           Foreground="Gray"/>
-                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </TreeView.DataTemplates>
-                </TreeView>
-            </Grid>
+            <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
+                <Grid RowDefinitions="Auto, *">
+                    <Button Grid.Row="0" Command="{Binding AddRequestCommand}" 
+                            HorizontalAlignment="Stretch" Margin="12" Classes="accent" Padding="0,8">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <ic:SymbolIcon Symbol="Add" FontSize="16"/>
+                            <TextBlock Text="New Request"/>
+                        </StackPanel>
+                    </Button>
+                    
+                    <TreeView Grid.Row="1" ItemsSource="{Binding Collections}" 
+                              SelectedItem="{Binding SelectedRequest}"
+                              Background="Transparent">
+                        <TreeView.DataTemplates>
+                            <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ic:SymbolIcon Symbol="Folder" FontSize="16" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </TreeDataTemplate>
+                            <DataTemplate DataType="vm:RequestViewModel">
+                                <StackPanel Orientation="Horizontal" Margin="0,2" Spacing="8">
+                                    <TextBlock Text="{Binding Method}" Width="40" FontSize="10" VerticalAlignment="Center" 
+                                               FontWeight="Bold" Foreground="{DynamicResource SystemAccentColor}"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </TreeView.DataTemplates>
+                    </TreeView>
+                </Grid>
+            </Border>
 
             <!-- Splitter -->
-            <GridSplitter Grid.Column="1" Background="LightGray"/>
+            <GridSplitter Grid.Column="1" Background="Transparent"/>
 
             <!-- Main Content -->
-            <Grid Grid.Column="2" RowDefinitions="Auto, *" Margin="10">
+            <Grid Grid.Column="2" RowDefinitions="Auto, *" Margin="20">
                 <!-- URL Bar -->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,10">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,20">
                     <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
-                    <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="Enter URL (https://...)" VerticalContentAlignment="Center"/>
-                    <Button Grid.Column="2" Content="Save" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Ctrl+S"/>
-                    <Button Grid.Column="3" Content="Send" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Ctrl+Enter" Classes="accent"/>
+                    <TextBox Grid.Column="1" Text="{Binding Url}" Watermark="Enter URL (https://...)" VerticalContentAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                    <Button Grid.Column="2" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Save (Ctrl+S)" Padding="10,6">
+                        <ic:SymbolIcon Symbol="Save" FontSize="18"/>
+                    </Button>
+                    <Button Grid.Column="3" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Send (Ctrl+Enter)" Classes="accent" FontWeight="Bold" Width="90" HorizontalContentAlignment="Center" Padding="0,6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ic:SymbolIcon Symbol="Send" FontSize="16"/>
+                            <TextBlock Text="Send"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
 
                 <!-- Tabs / Editors -->
-                <Grid Grid.Row="1" RowDefinitions="*, 4, *, Auto">
+                <Grid Grid.Row="1" RowDefinitions="2*, 4, 1*, Auto">
                     <TabControl Grid.Row="0">
-                        <TabItem Header="Body">
-                            <TextBox Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,5,0,0"/>
+                        <TabItem>
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ic:SymbolIcon Symbol="Document" FontSize="14"/>
+                                    <TextBlock Text="Body"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <TextBox Text="{Binding RequestBody}" AcceptsReturn="True" Watermark="{}{ ... }" Margin="0,10,0,0" 
+                                     FontFamily="Consolas,Monaco,Andale Mono,Ubuntu Mono,monospace"
+                                     FontSize="13"/>
                         </TabItem>
-                        <TabItem Header="Headers">
-                            <Grid RowDefinitions="*, Auto">
-                                <DataGrid Grid.Row="0" ItemsSource="{Binding Headers}" AutoGenerateColumns="False" CanUserResizeColumns="True">
+                        <TabItem>
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ic:SymbolIcon Symbol="List" FontSize="14"/>
+                                    <TextBlock Text="Headers"/>
+                                </StackPanel>
+                            </TabItem.Header>
+                            <Grid RowDefinitions="*, Auto" Margin="0,10,0,0">
+                                <DataGrid Grid.Row="0" ItemsSource="{Binding Headers}" AutoGenerateColumns="False" CanUserResizeColumns="True" 
+                                          BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
                                     <DataGrid.Columns>
                                         <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" Width="Auto"/>
                                         <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="*"/>
@@ -86,44 +145,77 @@
                                         <DataGridTemplateColumn Width="Auto">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Button Content="X" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveHeaderCommand}" 
-                                                            CommandParameter="{Binding}" Padding="5,2" Background="Transparent" Foreground="Red"/>
+                                                    <Button Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveHeaderCommand}" 
+                                                            CommandParameter="{Binding}" Padding="8,4" Background="Transparent" Foreground="Red">
+                                                        <ic:SymbolIcon Symbol="Delete" FontSize="16"/>
+                                                    </Button>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
-                                <Button Grid.Row="1" Content="+ Add Header" Command="{Binding AddHeaderCommand}" Margin="0,5,0,0" HorizontalAlignment="Right"/>
+                                <Button Grid.Row="1" Command="{Binding AddHeaderCommand}" Margin="0,8,0,0" HorizontalAlignment="Right" Padding="8,4">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ic:SymbolIcon Symbol="Add" FontSize="14"/>
+                                        <TextBlock Text="Add Header"/>
+                                    </StackPanel>
+                                </Button>
                             </Grid>
                         </TabItem>
-                        <TabItem Header="Variables">
-                            <Grid RowDefinitions="Auto, *, Auto">
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                                    <TextBlock Text="Edit variables for: " VerticalAlignment="Center"/>
-                                    <TextBox Text="{Binding CurrentEnvironment.Name}" Width="200" Margin="5,0,0,0"/>
+                        <TabItem>
+                            <TabItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ic:SymbolIcon Symbol="Glance" FontSize="14"/>
+                                    <TextBlock Text="Variables"/>
                                 </StackPanel>
-                                <DataGrid Grid.Row="1" ItemsSource="{Binding CurrentEnvironment.Variables}" AutoGenerateColumns="False">
+                            </TabItem.Header>
+                            <Grid RowDefinitions="Auto, *, Auto" Margin="0,10,0,0">
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15" Spacing="10">
+                                    <TextBlock Text="Environment Name: " VerticalAlignment="Center"/>
+                                    <TextBox Text="{Binding CurrentEnvironment.Name}" Width="250"/>
+                                </StackPanel>
+                                <DataGrid Grid.Row="1" ItemsSource="{Binding CurrentEnvironment.Variables}" AutoGenerateColumns="False"
+                                          BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Variable" Binding="{Binding Key}" Width="*"/>
+                                        <DataGridTextColumn Header="Variable Key" Binding="{Binding Key}" Width="*"/>
                                         <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
-                                <Button Grid.Row="2" Content="Save Environments" Command="{Binding SaveEnvironmentsCommand}" Margin="0,5,0,0" HorizontalAlignment="Right"/>
+                                <Button Grid.Row="2" Command="{Binding SaveEnvironmentsCommand}" Margin="0,8,0,0" HorizontalAlignment="Right" Classes="accent" Padding="12,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <ic:SymbolIcon Symbol="Save" FontSize="14"/>
+                                        <TextBlock Text="Save Environments"/>
+                                    </StackPanel>
+                                </Button>
                             </Grid>
                         </TabItem>
                     </TabControl>
 
-                    <GridSplitter Grid.Row="1" Background="LightGray" Margin="0,5"/>
+                    <GridSplitter Grid.Row="1" Background="Transparent" Margin="0,5"/>
 
                     <!-- Response Section -->
                     <Grid Grid.Row="2" RowDefinitions="Auto, *">
-                        <TextBlock Grid.Row="0" Text="Response:" Margin="0,5,0,5" FontWeight="Bold"/>
-                        <TextBox Grid.Row="1" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,5,0,10" Spacing="8">
+                            <ic:SymbolIcon Symbol="History" FontSize="16"/>
+                            <TextBlock Text="Response" FontWeight="Bold" FontSize="14"/>
+                        </StackPanel>
+                        <TextBox Grid.Row="1" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" 
+                                 Watermark="Response will appear here..." 
+                                 FontFamily="Consolas,Monaco,Andale Mono,Ubuntu Mono,monospace"
+                                 Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                 FontSize="13"/>
                     </Grid>
 
                     <!-- Status Bar -->
-                    <Border Grid.Row="3" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
-                        <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+                    <Border Grid.Row="3" 
+                            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                            Padding="12,6" 
+                            Margin="0,10,0,0" 
+                            CornerRadius="4">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <ic:SymbolIcon Symbol="Info" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding StatusText}" FontSize="12" VerticalAlignment="Center" FontWeight="Medium"/>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Grid>

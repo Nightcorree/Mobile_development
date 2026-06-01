@@ -1,0 +1,23 @@
+{
+  "Name": "Sample Collection",
+  "Requests": [
+    {
+      "Name": "Get Post 1",
+      "Method": "GET",
+      "Url": "{{baseUrl}}/posts/1",
+      "Headers": {},
+      "Body": null,
+      "BodyType": "application/json"
+    },
+    {
+      "Name": "Create Post",
+      "Method": "POST",
+      "Url": "{{baseUrl}}/posts",
+      "Headers": {
+        "Content-Type": "application/json"
+      },
+      "Body": "{\u0022title\u0022: \u0022foo\u0022, \u0022body\u0022: \u0022bar\u0022, \u0022userId\u0022: 1}",
+      "BodyType": "application/json"
+    }
+  ]
+}
