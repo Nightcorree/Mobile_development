@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using ApiTester.Core.Models;
 using ApiTester.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,6 +16,7 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly HttpClientService _httpClientService;
     private const string DefaultCollectionPath = "collections.json";
+    private const string DefaultEnvironmentsPath = "environments.json";
 
     [ObservableProperty]
     private string _url = "{{baseUrl}}/posts/1";
@@ -37,10 +40,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private RequestViewModel? _selectedRequest;
 
     [ObservableProperty]
-    private EnvironmentModel? _currentEnvironment;
+    private EnvironmentViewModel? _currentEnvironment;
 
     public ObservableCollection<CollectionViewModel> Collections { get; } = new();
     public ObservableCollection<HeaderViewModel> Headers { get; } = new();
+    public ObservableCollection<EnvironmentViewModel> Environments { get; } = new();
     public ObservableCollection<string> Methods { get; } = new() { "GET", "POST", "PUT", "DELETE" };
 
     public MainWindowViewModel()
@@ -51,12 +55,41 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task LoadDataAsync()
     {
-        CurrentEnvironment = new EnvironmentModel
+        // Load Environments
+        if (File.Exists(DefaultEnvironmentsPath))
         {
-            Name = "Dev",
-            Variables = new() { { "baseUrl", "https://jsonplaceholder.typicode.com" } }
-        };
+            try
+            {
+                var json = await File.ReadAllTextAsync(DefaultEnvironmentsPath);
+                var envModels = JsonSerializer.Deserialize<List<EnvironmentModel>>(json);
+                if (envModels != null)
+                {
+                    foreach (var m in envModels) Environments.Add(new EnvironmentViewModel(m));
+                }
+            }
+            catch { }
+        }
 
+        if (Environments.Count == 0)
+        {
+            var defaultEnv = new EnvironmentModel
+            {
+                Name = "No Environment",
+                Variables = new()
+            };
+            var devEnv = new EnvironmentModel
+            {
+                Name = "Dev",
+                Variables = new() { { "baseUrl", "https://jsonplaceholder.typicode.com" } }
+            };
+            Environments.Add(new EnvironmentViewModel(defaultEnv));
+            Environments.Add(new EnvironmentViewModel(devEnv));
+            await SaveEnvironmentsAsync();
+        }
+
+        CurrentEnvironment = Environments.FirstOrDefault(e => e.Name != "No Environment") ?? Environments.First();
+
+        // Load Collections
         if (File.Exists(DefaultCollectionPath))
         {
             var loaded = await FileService.LoadCollectionAsync(DefaultCollectionPath);
@@ -106,7 +139,6 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 Headers.Add(new HeaderViewModel { Key = h.Key, Value = h.Value, IsEnabled = h.IsEnabled });
             }
-            // Ensure at least one empty row
             if (Headers.Count == 0 || !string.IsNullOrWhiteSpace(Headers.Last().Key))
             {
                 Headers.Add(new HeaderViewModel());
@@ -115,16 +147,10 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddHeader()
-    {
-        Headers.Add(new HeaderViewModel());
-    }
+    private void AddHeader() => Headers.Add(new HeaderViewModel());
 
     [RelayCommand]
-    private void RemoveHeader(HeaderViewModel header)
-    {
-        Headers.Remove(header);
-    }
+    private void RemoveHeader(HeaderViewModel header) => Headers.Remove(header);
 
     [RelayCommand]
     private async Task SendRequest()
@@ -142,7 +168,7 @@ public partial class MainWindowViewModel : ViewModelBase
                             .ToDictionary(h => h.Key, h => h.Value)
         };
 
-        var processedRequest = VariableProcessor.ProcessRequest(rawRequest, CurrentEnvironment);
+        var processedRequest = VariableProcessor.ProcessRequest(rawRequest, CurrentEnvironment?.ToModel());
 
         try
         {
@@ -193,5 +219,28 @@ public partial class MainWindowViewModel : ViewModelBase
             var model = Collections[0].ToModel();
             await FileService.SaveCollectionAsync(model, DefaultCollectionPath);
         }
+    }
+
+    private async Task SaveEnvironmentsAsync()
+    {
+        var models = Environments.Select(e => e.ToModel()).ToList();
+        var json = JsonSerializer.Serialize(models, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(DefaultEnvironmentsPath, json);
+    }
+
+    [RelayCommand]
+    private async Task AddEnvironment()
+    {
+        var newEnv = new EnvironmentViewModel(new EnvironmentModel { Name = "New Environment" });
+        Environments.Add(newEnv);
+        CurrentEnvironment = newEnv;
+        await SaveEnvironmentsAsync();
+    }
+
+    [RelayCommand]
+    private async Task SaveEnvironments()
+    {
+        await SaveEnvironmentsAsync();
+        StatusText = "Environments saved";
     }
 }

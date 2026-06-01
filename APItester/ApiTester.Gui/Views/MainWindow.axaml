@@ -18,82 +18,114 @@
         <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCurrentRequestCommand}" />
     </Window.KeyBindings>
 
-    <Grid ColumnDefinitions="250, 4, *">
-        <!-- Sidebar -->
-        <Grid Grid.Column="0" RowDefinitions="Auto, *">
-            <Button Grid.Row="0" Content="+ New Request" Command="{Binding AddRequestCommand}" 
-                    HorizontalAlignment="Stretch" Margin="5"/>
-            
-            <TreeView Grid.Row="1" ItemsSource="{Binding Collections}" 
-                      SelectedItem="{Binding SelectedRequest}">
-                <TreeView.DataTemplates>
-                    <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
-                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                    </TreeDataTemplate>
-                    <DataTemplate DataType="vm:RequestViewModel">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Method}" Width="45" FontSize="10" VerticalAlignment="Center" 
-                                       Foreground="Gray"/>
-                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </TreeView.DataTemplates>
-            </TreeView>
-        </Grid>
+    <Grid RowDefinitions="Auto, *">
+        <!-- Top Toolbar -->
+        <Border Grid.Row="0" Background="#F3F3F3" Padding="5" BorderBrush="LightGray" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="Environment:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <ComboBox ItemsSource="{Binding Environments}" SelectedItem="{Binding CurrentEnvironment}" Width="200">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="⚙" Command="{Binding AddEnvironmentCommand}" Margin="5,0,0,0" ToolTip.Tip="Manage Environments"/>
+            </StackPanel>
+        </Border>
 
-        <!-- Splitter -->
-        <GridSplitter Grid.Column="1" Background="LightGray"/>
-
-        <!-- Main Content -->
-        <Grid Grid.Column="2" RowDefinitions="Auto, *" Margin="10">
-            <!-- URL Bar -->
-            <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,10">
-                <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
-                <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="Enter URL (https://...)" VerticalContentAlignment="Center"/>
-                <Button Grid.Column="2" Content="Save" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Ctrl+S"/>
-                <Button Grid.Column="3" Content="Send" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Ctrl+Enter" Classes="accent"/>
+        <Grid Grid.Row="1" ColumnDefinitions="250, 4, *">
+            <!-- Sidebar -->
+            <Grid Grid.Column="0" RowDefinitions="Auto, *">
+                <Button Grid.Row="0" Content="+ New Request" Command="{Binding AddRequestCommand}" 
+                        HorizontalAlignment="Stretch" Margin="5"/>
+                
+                <TreeView Grid.Row="1" ItemsSource="{Binding Collections}" 
+                          SelectedItem="{Binding SelectedRequest}">
+                    <TreeView.DataTemplates>
+                        <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                        </TreeDataTemplate>
+                        <DataTemplate DataType="vm:RequestViewModel">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Method}" Width="45" FontSize="10" VerticalAlignment="Center" 
+                                           Foreground="Gray"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TreeView.DataTemplates>
+                </TreeView>
             </Grid>
 
-            <!-- Tabs / Editors -->
-            <Grid Grid.Row="1" RowDefinitions="*, 4, *, Auto">
-                <TabControl Grid.Row="0">
-                    <TabItem Header="Body">
-                        <TextBox Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,5,0,0"/>
-                    </TabItem>
-                    <TabItem Header="Headers">
-                        <Grid RowDefinitions="*, Auto">
-                            <DataGrid Grid.Row="0" ItemsSource="{Binding Headers}" AutoGenerateColumns="False" CanUserResizeColumns="True">
-                                <DataGrid.Columns>
-                                    <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" Width="Auto"/>
-                                    <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="*"/>
-                                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
-                                    <DataGridTemplateColumn Width="Auto">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Button Content="X" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveHeaderCommand}" 
-                                                        CommandParameter="{Binding}" Padding="5,2" Background="Transparent" Foreground="Red"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
-                            <Button Grid.Row="1" Content="+ Add Header" Command="{Binding AddHeaderCommand}" Margin="0,5,0,0" HorizontalAlignment="Right"/>
-                        </Grid>
-                    </TabItem>
-                </TabControl>
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Background="LightGray"/>
 
-                <GridSplitter Grid.Row="1" Background="LightGray" Margin="0,5"/>
-
-                <!-- Response Section -->
-                <Grid Grid.Row="2" RowDefinitions="Auto, *">
-                    <TextBlock Grid.Row="0" Text="Response:" Margin="0,5,0,5" FontWeight="Bold"/>
-                    <TextBox Grid.Row="1" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+            <!-- Main Content -->
+            <Grid Grid.Column="2" RowDefinitions="Auto, *" Margin="10">
+                <!-- URL Bar -->
+                <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,10">
+                    <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
+                    <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="Enter URL (https://...)" VerticalContentAlignment="Center"/>
+                    <Button Grid.Column="2" Content="Save" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Ctrl+S"/>
+                    <Button Grid.Column="3" Content="Send" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Ctrl+Enter" Classes="accent"/>
                 </Grid>
 
-                <!-- Status Bar -->
-                <Border Grid.Row="3" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
-                    <TextBlock Text="{Binding StatusText}" FontSize="12"/>
-                </Border>
+                <!-- Tabs / Editors -->
+                <Grid Grid.Row="1" RowDefinitions="*, 4, *, Auto">
+                    <TabControl Grid.Row="0">
+                        <TabItem Header="Body">
+                            <TextBox Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,5,0,0"/>
+                        </TabItem>
+                        <TabItem Header="Headers">
+                            <Grid RowDefinitions="*, Auto">
+                                <DataGrid Grid.Row="0" ItemsSource="{Binding Headers}" AutoGenerateColumns="False" CanUserResizeColumns="True">
+                                    <DataGrid.Columns>
+                                        <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" Width="Auto"/>
+                                        <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="*"/>
+                                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                                        <DataGridTemplateColumn Width="Auto">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="X" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveHeaderCommand}" 
+                                                            CommandParameter="{Binding}" Padding="5,2" Background="Transparent" Foreground="Red"/>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Button Grid.Row="1" Content="+ Add Header" Command="{Binding AddHeaderCommand}" Margin="0,5,0,0" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Variables">
+                            <Grid RowDefinitions="Auto, *, Auto">
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="Edit variables for: " VerticalAlignment="Center"/>
+                                    <TextBox Text="{Binding CurrentEnvironment.Name}" Width="200" Margin="5,0,0,0"/>
+                                </StackPanel>
+                                <DataGrid Grid.Row="1" ItemsSource="{Binding CurrentEnvironment.Variables}" AutoGenerateColumns="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Variable" Binding="{Binding Key}" Width="*"/>
+                                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Button Grid.Row="2" Content="Save Environments" Command="{Binding SaveEnvironmentsCommand}" Margin="0,5,0,0" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+
+                    <GridSplitter Grid.Row="1" Background="LightGray" Margin="0,5"/>
+
+                    <!-- Response Section -->
+                    <Grid Grid.Row="2" RowDefinitions="Auto, *">
+                        <TextBlock Grid.Row="0" Text="Response:" Margin="0,5,0,5" FontWeight="Bold"/>
+                        <TextBox Grid.Row="1" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+                    </Grid>
+
+                    <!-- Status Bar -->
+                    <Border Grid.Row="3" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
+                        <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+                    </Border>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>
