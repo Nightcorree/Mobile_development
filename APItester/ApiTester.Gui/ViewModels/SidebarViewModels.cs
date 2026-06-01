@@ -49,7 +49,7 @@ public partial class RequestViewModel : ViewModelBase
 
     public RequestViewModel(RequestModel model)
     {
-        _name = string.IsNullOrEmpty(model.Name) ? "Untitled Request" : model.Name;
+        _name = string.IsNullOrEmpty(model.Name) ? "Запрос без названия" : model.Name;
         _method = model.Method;
         _url = model.Url;
         _body = model.Body;

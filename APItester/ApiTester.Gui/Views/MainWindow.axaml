@@ -48,7 +48,7 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                    <TextBlock Text="Environment:" VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock Text="Окружение:" VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                     <ComboBox ItemsSource="{Binding Environments}" SelectedItem="{Binding CurrentEnvironment}" Width="200">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
@@ -56,7 +56,7 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-                    <Button Command="{Binding AddEnvironmentCommand}" ToolTip.Tip="New Environment" Padding="8,4">
+                    <Button Command="{Binding AddEnvironmentCommand}" ToolTip.Tip="Новое окружение" Padding="8,4">
                         <ic:SymbolIcon Symbol="Add" FontSize="18"/>
                     </Button>
                 </StackPanel>
@@ -72,14 +72,14 @@
                                 HorizontalAlignment="Stretch" Classes="accent" Padding="0,8" Margin="0,0,5,0">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                                 <ic:SymbolIcon Symbol="Add" FontSize="16"/>
-                                <TextBlock Text="Request"/>
+                                <TextBlock Text="Запрос"/>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="1" Command="{Binding AddCollectionCommand}" 
                                 HorizontalAlignment="Stretch" Padding="0,8" Margin="5,0,0,0">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                                 <ic:SymbolIcon Symbol="FolderAdd" FontSize="16"/>
-                                <TextBlock Text="Collection"/>
+                                <TextBlock Text="Коллекция"/>
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -111,7 +111,7 @@
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveRequestCommand}" 
                                             CommandParameter="{Binding}"
                                             Padding="4" Background="Transparent" BorderThickness="0"
-                                            ToolTip.Tip="Delete Request">
+                                            ToolTip.Tip="Удалить запрос">
                                         <ic:SymbolIcon Symbol="Delete" FontSize="14" Foreground="Red"/>
                                     </Button>
                                 </Grid>
@@ -127,21 +127,21 @@
             <!-- Main Content -->
             <Grid Grid.Column="2" RowDefinitions="Auto, Auto, *" Margin="20">
                 <!-- Name Row -->
-                <TextBox Grid.Row="0" Text="{Binding RequestName}" Watermark="Request Name" 
+                <TextBox Grid.Row="0" Text="{Binding RequestName}" Watermark="Название запроса" 
                          FontSize="18" FontWeight="SemiBold" BorderThickness="0" Background="Transparent" 
                          Margin="0,0,0,10" Padding="0"/>
 
                 <!-- URL Bar -->
                 <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,20">
                     <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
-                    <TextBox Grid.Column="1" Text="{Binding Url}" Watermark="Enter URL (https://...)" VerticalContentAlignment="Center" FontWeight="Medium" FontSize="14"/>
-                    <Button Grid.Column="2" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Save (Ctrl+S)" Padding="10,6">
+                    <TextBox Grid.Column="1" Text="{Binding Url}" Watermark="Введите URL (https://...)" VerticalContentAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                    <Button Grid.Column="2" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Сохранить (Ctrl+S)" Padding="10,6">
                         <ic:SymbolIcon Symbol="Save" FontSize="18"/>
                     </Button>
-                    <Button Grid.Column="3" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Send (Ctrl+Enter)" Classes="accent" FontWeight="Bold" Width="90" HorizontalContentAlignment="Center" Padding="0,6">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Grid.Column="3" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Отправить (Ctrl+Enter)" Classes="accent" FontWeight="Bold" MinWidth="130" HorizontalContentAlignment="Center" Padding="15,6">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
                             <ic:SymbolIcon Symbol="Send" FontSize="16"/>
-                            <TextBlock Text="Send"/>
+                            <TextBlock Text="Отправить"/>
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -153,7 +153,7 @@
                             <TabItem.Header>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <ic:SymbolIcon Symbol="Document" FontSize="14"/>
-                                    <TextBlock Text="Body"/>
+                                    <TextBlock Text="Тело"/>
                                 </StackPanel>
                             </TabItem.Header>
                             <TextBox Text="{Binding RequestBody}" AcceptsReturn="True" Watermark="{}{ ... }" Margin="0,10,0,0" 
@@ -164,7 +164,7 @@
                             <TabItem.Header>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <ic:SymbolIcon Symbol="List" FontSize="14"/>
-                                    <TextBlock Text="Headers"/>
+                                    <TextBlock Text="Заголовки"/>
                                 </StackPanel>
                             </TabItem.Header>
                             <Grid RowDefinitions="*, Auto" Margin="0,10,0,0">
@@ -172,8 +172,8 @@
                                           BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
                                     <DataGrid.Columns>
                                         <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" Width="Auto"/>
-                                        <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="*"/>
-                                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                                        <DataGridTextColumn Header="Ключ" Binding="{Binding Key}" Width="*"/>
+                                        <DataGridTextColumn Header="Значение" Binding="{Binding Value}" Width="*"/>
                                         <DataGridTemplateColumn Width="Auto">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
@@ -189,7 +189,7 @@
                                 <Button Grid.Row="1" Command="{Binding AddHeaderCommand}" Margin="0,8,0,0" HorizontalAlignment="Right" Padding="8,4">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <ic:SymbolIcon Symbol="Add" FontSize="14"/>
-                                        <TextBlock Text="Add Header"/>
+                                        <TextBlock Text="Добавить заголовок"/>
                                     </StackPanel>
                                 </Button>
                             </Grid>
@@ -198,15 +198,15 @@
                             <TabItem.Header>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <ic:SymbolIcon Symbol="Glance" FontSize="14"/>
-                                    <TextBlock Text="Variables"/>
+                                    <TextBlock Text="Переменные"/>
                                 </StackPanel>
                             </TabItem.Header>
                             <Grid RowDefinitions="Auto, *, Auto" Margin="0,10,0,0">
                                 <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,15">
-                                    <TextBlock Grid.Column="0" Text="Environment Name: " VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="Название окружения: " VerticalAlignment="Center"/>
                                     <TextBox Grid.Column="1" Text="{Binding CurrentEnvironment.Name}" Margin="10,0,10,0"/>
                                     <Button Grid.Column="2" Command="{Binding RemoveEnvironmentCommand}" 
-                                            ToolTip.Tip="Delete Environment" Background="Transparent" BorderThickness="0">
+                                            ToolTip.Tip="Удалить окружение" Background="Transparent" BorderThickness="0">
                                         <ic:SymbolIcon Symbol="Delete" FontSize="18" Foreground="Red"/>
                                     </Button>
                                 </Grid>
@@ -214,8 +214,8 @@
                                     <DataGrid Grid.Row="0" ItemsSource="{Binding CurrentEnvironment.Variables}" AutoGenerateColumns="False"
                                               BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Variable Key" Binding="{Binding Key}" Width="*"/>
-                                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                                            <DataGridTextColumn Header="Ключ переменной" Binding="{Binding Key}" Width="*"/>
+                                            <DataGridTextColumn Header="Значение" Binding="{Binding Value}" Width="*"/>
                                             <DataGridTemplateColumn Width="Auto">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
@@ -231,14 +231,14 @@
                                     <Button Grid.Row="1" Command="{Binding AddVariableCommand}" Margin="0,8,0,0" HorizontalAlignment="Right" Padding="8,4">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <ic:SymbolIcon Symbol="Add" FontSize="14"/>
-                                            <TextBlock Text="Add Variable"/>
+                                            <TextBlock Text="Добавить переменную"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
                                 <Button Grid.Row="2" Command="{Binding SaveEnvironmentsCommand}" Margin="0,12,0,0" HorizontalAlignment="Stretch" Classes="accent" Padding="12,8">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                                         <ic:SymbolIcon Symbol="Save" FontSize="14"/>
-                                        <TextBlock Text="Save Environments"/>
+                                        <TextBlock Text="Сохранить окружения"/>
                                     </StackPanel>
                                 </Button>
                             </Grid>
@@ -251,10 +251,10 @@
                     <Grid Grid.Row="2" RowDefinitions="Auto, *">
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,5,0,10" Spacing="8">
                             <ic:SymbolIcon Symbol="History" FontSize="16"/>
-                            <TextBlock Text="Response" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="Ответ" FontWeight="Bold" FontSize="14"/>
                         </StackPanel>
                         <TextBox Grid.Row="1" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" 
-                                 Watermark="Response will appear here..." 
+                                 Watermark="Ответ появится здесь..." 
                                  FontFamily="Consolas,Monaco,Andale Mono,Ubuntu Mono,monospace"
                                  Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                                  FontSize="13"/>

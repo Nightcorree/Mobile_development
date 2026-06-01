@@ -23,7 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private const string DefaultEnvironmentsPath = "environments.json";
 
     [ObservableProperty]
-    private string _requestName = "New Request";
+    private string _requestName = "Новый запрос";
 
     [ObservableProperty]
     private string _url = "{{baseUrl}}/posts/1";
@@ -38,7 +38,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string? _responseText;
 
     [ObservableProperty]
-    private string _statusText = "Ready";
+    private string _statusText = "Готов";
 
     [ObservableProperty]
     private object? _selectedItem;
@@ -79,7 +79,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (Environments.Count == 0)
         {
-            var defaultEnv = new EnvironmentModel { Name = "No Environment", Variables = new() };
+            var defaultEnv = new EnvironmentModel { Name = "Без окружения", Variables = new() };
             Environments.Add(new EnvironmentViewModel(defaultEnv));
             await SaveEnvironmentsAsync();
         }
@@ -117,11 +117,11 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         var sampleColl = new CollectionModel 
         { 
-            Name = "Sample Collection",
+            Name = "Пример коллекции",
             Requests = new() 
             {
-                new RequestModel { Name = "Get Post 1", Method = "GET", Url = "{{baseUrl}}/posts/1" },
-                new RequestModel { Name = "Create Post", Method = "POST", Url = "{{baseUrl}}/posts", Body = "{\"title\": \"foo\", \"body\": \"bar\", \"userId\": 1}" }
+                new RequestModel { Name = "Получить пост 1", Method = "GET", Url = "{{baseUrl}}/posts/1" },
+                new RequestModel { Name = "Создать пост", Method = "POST", Url = "{{baseUrl}}/posts", Body = "{\"title\": \"foo\", \"body\": \"bar\", \"userId\": 1}" }
             }
         };
         Collections.Add(new CollectionViewModel(sampleColl));
@@ -173,7 +173,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task SendRequest()
     {
-        StatusText = "Sending...";
+        StatusText = "Отправка...";
         ResponseText = string.Empty;
 
         var rawRequest = new RequestModel
@@ -201,12 +201,12 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else { ResponseText = response.Body; }
 
-            StatusText = $"Status: {response.StatusCode} | Time: {response.ResponseTime.TotalMilliseconds:F0}ms";
+            StatusText = $"Статус: {response.StatusCode} | Время: {response.ResponseTime.TotalMilliseconds:F0}мс";
         }
         catch (Exception ex)
         {
-            ResponseText = $"Error: {ex.Message}";
-            StatusText = "Error";
+            ResponseText = $"Ошибка: {ex.Message}";
+            StatusText = "Ошибка";
         }
     }
 
@@ -218,7 +218,7 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedRequest.UpdateFrom(Url, Method, RequestBody, Headers);
             SelectedRequest.Name = RequestName;
             await SaveCollectionsAsync();
-            StatusText = "Saved successfully";
+            StatusText = "Успешно сохранено";
         }
     }
 
@@ -240,11 +240,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (targetCollection == null)
         {
-            targetCollection = new CollectionViewModel(new CollectionModel { Name = "New Collection" });
+            targetCollection = new CollectionViewModel(new CollectionModel { Name = "Новая коллекция" });
             Collections.Add(targetCollection);
         }
         
-        var newReq = new RequestViewModel(new RequestModel { Name = "New Request", Method = "GET", Url = "https://" });
+        var newReq = new RequestViewModel(new RequestModel { Name = "Новый запрос", Method = "GET", Url = "https://" });
         targetCollection.Requests.Add(newReq);
         SelectedItem = newReq;
         await SaveCollectionsAsync();
@@ -262,7 +262,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     collection.Requests.Remove(request);
                     if (SelectedRequest == request) SelectedItem = null;
                     await SaveCollectionsAsync();
-                    StatusText = "Request deleted";
+                    StatusText = "Запрос удален";
                     break;
                 }
             }
@@ -272,7 +272,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task AddCollection()
     {
-        var newColl = new CollectionViewModel(new CollectionModel { Name = "New Collection" });
+        var newColl = new CollectionViewModel(new CollectionModel { Name = "Новая коллекция" });
         Collections.Add(newColl);
         SelectedItem = newColl;
         await SaveCollectionsAsync();
@@ -285,7 +285,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Collections.Remove(collection);
             await SaveCollectionsAsync();
-            StatusText = "Collection deleted";
+            StatusText = "Коллекция удалена";
         }
     }
 
@@ -355,7 +355,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task AddEnvironment()
     {
-        var newEnv = new EnvironmentViewModel(new EnvironmentModel { Name = "New Environment" });
+        var newEnv = new EnvironmentViewModel(new EnvironmentModel { Name = "Новое окружение" });
         Environments.Add(newEnv);
         CurrentEnvironment = newEnv;
         await SaveEnvironmentsAsync();
@@ -366,7 +366,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (CurrentEnvironment == null || Environments.Count <= 1)
         {
-            StatusText = "Cannot delete the last environment";
+            StatusText = "Нельзя удалить последнее окружение";
             return;
         }
 
@@ -376,7 +376,7 @@ public partial class MainWindowViewModel : ViewModelBase
             Environments.Remove(toRemove);
             CurrentEnvironment = Environments.First();
             await SaveEnvironmentsAsync();
-            StatusText = "Environment deleted";
+            StatusText = "Окружение удалено";
         }
     }
 
@@ -384,6 +384,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task SaveEnvironments()
     {
         await SaveEnvironmentsAsync();
-        StatusText = "Environments saved";
+        StatusText = "Окружения сохранены";
     }
 }
