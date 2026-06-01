@@ -1,0 +1,13 @@
+{
+  "Name": "Sample Collection",
+  "Requests": [
+    {
+      "Name": "Test GET Request",
+      "Method": "GET",
+      "Url": "https://jsonplaceholder.typicode.com/posts/1",
+      "Headers": {},
+      "Body": null,
+      "BodyType": null
+    }
+  ]
+}

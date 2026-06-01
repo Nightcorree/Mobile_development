@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ApiTester.Cli/ApiTester.Cli.csproj" />
+  <Project Path="ApiTester.Core/ApiTester.Core.csproj" />
+  <Project Path="ApiTester.Gui/ApiTester.Gui.csproj" />
+</Solution>

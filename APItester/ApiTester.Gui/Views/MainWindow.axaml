@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ApiTester.Gui.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="ApiTester.Gui.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Mini-Postman (ApiTester)">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SendRequestCommand}" />
+    </Window.KeyBindings>
+
+    <Grid RowDefinitions="Auto, Auto, 1*, Auto, 1*, Auto" Margin="10">
+        <!-- Request Section -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,10">
+            <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
+            <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="Enter URL (https://...)" VerticalContentAlignment="Center"/>
+            <Button Grid.Column="2" Content="Send" Command="{Binding SendRequestCommand}" Margin="10,0,0,0"/>
+        </Grid>
+
+        <TextBlock Grid.Row="1" Text="Request Body (JSON):" Margin="0,0,0,5"/>
+        <TextBox Grid.Row="2" Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,0,0,10"/>
+
+        <!-- Response Section -->
+        <TextBlock Grid.Row="3" Text="Response:" Margin="0,10,0,5"/>
+        <TextBox Grid.Row="4" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="5" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
+             <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+        </Border>
+    </Grid>
+
+</Window>
