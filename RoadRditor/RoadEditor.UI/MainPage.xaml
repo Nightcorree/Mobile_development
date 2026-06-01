@@ -21,18 +21,27 @@
         </HorizontalStackLayout>
 
         <!-- Sidebar (Tools) -->
-        <Grid Grid.Row="1" Grid.Column="0" BackgroundColor="#1A0F33" Padding="15" RowDefinitions="Auto, Auto, Auto, *">
+        <Grid Grid.Row="1" Grid.Column="0" BackgroundColor="#1A0F33" Padding="15" RowDefinitions="Auto, Auto, Auto, Auto, Auto, *">
             
+            <!-- Режимы работы -->
+            <Label Text="Инструмент:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="0" Margin="0,0,0,10" />
+            <FlexLayout Grid.Row="1" Wrap="Wrap" JustifyContent="Start" Margin="0,0,0,20">
+                <Button Text="🖐️" Clicked="OnToolModeClicked" CommandParameter="Navigate" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Навигация" />
+                <Button Text="🟦" Clicked="OnToolModeClicked" CommandParameter="DrawRect" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#5E35B1" CornerRadius="5" ToolTipProperties.Text="Область / Точка" />
+                <Button Text="📏" Clicked="OnToolModeClicked" CommandParameter="DrawLine" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Линия" />
+                <Button Text="🧽" Clicked="OnToolModeClicked" CommandParameter="Eraser" WidthRequest="50" HeightRequest="45" Margin="2" BackgroundColor="#333" CornerRadius="5" ToolTipProperties.Text="Ластик" />
+            </FlexLayout>
+
             <!-- Текущий элемент -->
-            <Label Text="Текущий элемент:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="0" Margin="0,0,0,5" />
+            <Label Text="Тайл:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="2" Margin="0,0,0,5" />
             <GraphicsView x:Name="PreviewGraphicsView" HeightRequest="100" WidthRequest="100" HorizontalOptions="Start"
-                          Drawable="{Binding PreviewDrawable}" Grid.Row="1" BackgroundColor="Black" Margin="0,0,0,30" />
+                          Drawable="{Binding PreviewDrawable}" Grid.Row="3" BackgroundColor="Black" Margin="0,0,0,30" />
             
             <!-- Доступные элементы -->
-            <Label Text="Доступные элементы:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="2" Margin="0,0,0,5" />
+            <Label Text="Палитра:" TextColor="White" FontAttributes="Bold" FontSize="16" Grid.Row="4" Margin="0,0,0,5" />
             
             <!-- Сетка элементов (кликабельная) -->
-            <GraphicsView x:Name="PaletteGraphicsView" Grid.Row="3" HorizontalOptions="Start" VerticalOptions="Start"
+            <GraphicsView x:Name="PaletteGraphicsView" Grid.Row="5" HorizontalOptions="Start" VerticalOptions="Start"
                           WidthRequest="260" HeightRequest="260" BackgroundColor="Black"
                           Drawable="{Binding PaletteDrawable}"
                           EndInteraction="OnPaletteTapped" />
@@ -43,7 +52,9 @@
         <ContentView Grid.Row="1" Grid.Column="1" BackgroundColor="#111111" Padding="20">
             <GraphicsView x:Name="MapGraphicsView"
                           Drawable="{Binding MapDrawable}"
-                          EndInteraction="OnMapTapped">
+                          StartInteraction="OnMapInteractionStarted"
+                          DragInteraction="OnMapInteractionDragged"
+                          EndInteraction="OnMapInteractionEnded">
                 <GraphicsView.GestureRecognizers>
                     <PanGestureRecognizer PanUpdated="OnPanUpdated" />
                     <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />

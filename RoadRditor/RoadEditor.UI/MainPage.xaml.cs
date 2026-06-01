@@ -9,6 +9,8 @@ public partial class MainPage : ContentPage
     public TilePreviewDrawable PreviewDrawable { get; } = new TilePreviewDrawable();
     private RoadMap _map;
     private TileType _currentTool = TileType.RoadHorizontal;
+    private ToolMode _currentMode = ToolMode.DrawRect; 
+    private Point? _dragStartPoint;
 
     public PaletteDrawable PaletteDrawable { get; } = new PaletteDrawable();
 
@@ -31,8 +33,6 @@ public partial class MainPage : ContentPage
         PreviewDrawable.MainDrawable = MapDrawable;
         PreviewDrawable.SelectedType = _currentTool;
         PaletteDrawable.MainDrawable = MapDrawable;
-        
-        BindingContext = this;
 
 #if WINDOWS
         MapGraphicsView.HandlerChanged += (s, e) =>
@@ -44,11 +44,9 @@ public partial class MainPage : ContentPage
                     var pointerPoint = args.GetCurrentPoint(nativeView);
                     var mousePoint = new Point(pointerPoint.Position.X, pointerPoint.Position.Y);
                     
-                    // Получаем дельту прокрутки. Обычно это 120 или -120 за один шаг колесика.
                     int delta = pointerPoint.Properties.MouseWheelDelta;
                     float zoomDelta = delta > 0 ? 0.15f : -0.15f;
 
-                    // Вызываем зум в основном потоке
                     MainThread.BeginInvokeOnMainThread(() => 
                     {
                         ChangeZoom(zoomDelta, mousePoint);
@@ -59,6 +57,170 @@ public partial class MainPage : ContentPage
             }
         };
 #endif
+        
+        BindingContext = this;
+    }
+
+    private void OnToolModeClicked(object? sender, EventArgs e)
+    {
+        if (sender is Button button && Enum.TryParse(button.CommandParameter?.ToString(), out ToolMode mode))
+        {
+            _currentMode = mode;
+            MapDrawable.CurrentMode = mode;
+
+            foreach (var child in ((FlexLayout)button.Parent).Children)
+            {
+                if (child is Button b)
+                {
+                    b.BackgroundColor = b == button ? Color.FromArgb("#5E35B1") : Color.FromArgb("#333");
+                }
+            }
+        }
+    }
+
+    private void OnMapInteractionStarted(object? sender, TouchEventArgs e)
+    {
+        var point = e.Touches.FirstOrDefault();
+        if (point == default) return;
+
+        _dragStartPoint = point;
+
+        if (_currentMode == ToolMode.Navigate)
+        {
+            _startOffsetX = MapDrawable.OffsetX;
+            _startOffsetY = MapDrawable.OffsetY;
+        }
+        else
+        {
+            var tilePos = GetTileAtPoint(point);
+            MapDrawable.SelectionStart = new Point(tilePos.x, tilePos.y);
+            MapDrawable.SelectionEnd = new Point(tilePos.x, tilePos.y);
+
+            if (_currentMode == ToolMode.Eraser)
+            {
+                PlaceTile(tilePos.x, tilePos.y, TileType.Empty);
+            }
+
+            MapGraphicsView.Invalidate();
+        }
+    }
+
+    private void OnMapInteractionDragged(object? sender, TouchEventArgs e)
+    {
+        var point = e.Touches.FirstOrDefault();
+        if (point == default || _dragStartPoint == null) return;
+
+        if (_currentMode == ToolMode.Navigate)
+        {
+            MapDrawable.OffsetX = _startOffsetX + (point.X - (float)_dragStartPoint.Value.X);
+            MapDrawable.OffsetY = _startOffsetY + (point.Y - (float)_dragStartPoint.Value.Y);
+            MapGraphicsView.Invalidate();
+        }
+        else
+        {
+            var tilePos = GetTileAtPoint(point);
+            MapDrawable.SelectionEnd = new Point(tilePos.x, tilePos.y);
+
+            if (_currentMode == ToolMode.Eraser)
+            {
+                PlaceTile(tilePos.x, tilePos.y, TileType.Empty);
+            }
+
+            MapGraphicsView.Invalidate();
+        }
+    }
+
+    private void OnMapInteractionEnded(object? sender, TouchEventArgs e)
+    {
+        if (_currentMode != ToolMode.Navigate && MapDrawable.SelectionStart.HasValue && MapDrawable.SelectionEnd.HasValue)
+        {
+            if (_currentMode == ToolMode.Eraser)
+            {
+                ApplyDrawing(TileType.Empty);
+            }
+            else
+            {
+                ApplyDrawing(_currentTool);
+            }
+        }
+
+        _dragStartPoint = null;
+        MapDrawable.SelectionStart = null;
+        MapDrawable.SelectionEnd = null;
+        MapGraphicsView.Invalidate();
+    }
+
+    private void ApplyDrawing(TileType toolToUse)
+    {
+        if (!MapDrawable.SelectionStart.HasValue || !MapDrawable.SelectionEnd.HasValue) return;
+
+        int x1 = (int)MapDrawable.SelectionStart.Value.X;
+        int y1 = (int)MapDrawable.SelectionStart.Value.Y;
+        int x2 = (int)MapDrawable.SelectionEnd.Value.X;
+        int y2 = (int)MapDrawable.SelectionEnd.Value.Y;
+
+        if (_currentMode == ToolMode.DrawRect || _currentMode == ToolMode.Eraser)
+        {
+            int startX = Math.Min(x1, x2);
+            int startY = Math.Min(y1, y2);
+            int endX = Math.Max(x1, x2);
+            int endY = Math.Max(y1, y2);
+
+            for (int x = startX; x <= endX; x++)
+            {
+                for (int y = startY; y <= endY; y++)
+                {
+                    PlaceTile(x, y, toolToUse);
+                }
+            }
+        }
+        else if (_currentMode == ToolMode.DrawLine)
+        {
+            if (Math.Abs(x1 - x2) > Math.Abs(y1 - y2))
+            {
+                int startX = Math.Min(x1, x2);
+                int endX = Math.Max(x1, x2);
+                for (int x = startX; x <= endX; x++)
+                    PlaceTile(x, y1, toolToUse);
+            }
+            else
+            {
+                int startY = Math.Min(y1, y2);
+                int endY = Math.Max(y1, y2);
+                for (int y = startY; y <= endY; y++)
+                    PlaceTile(x1, y, toolToUse);
+            }
+        }
+    }
+
+    private void PlaceTile(int x, int y, TileType type)
+    {
+        if (x < 0 || y < 0) return;
+
+        // Автоматическое расширение карты, если рисуем за пределами текущих границ
+        if (x >= _map.Width || y >= _map.Height)
+        {
+            int newWidth = Math.Max(_map.Width, x + 5);
+            int newHeight = Math.Max(_map.Height, y + 5);
+            _map.Resize(newWidth, newHeight);
+        }
+
+        var existingTile = _map.GetTile(x, y);
+        if (existingTile == null) return;
+
+        if (existingTile.Type == type && type != TileType.Empty) return;
+
+        _map.SetTile(x, y, type);
+        
+        // Автоматически обновляем соединения для текущего тайла и его соседей
+        RoadAutomation.AutoUpdateNeighbors(_map, x, y);
+    }
+
+    private (int x, int y) GetTileAtPoint(Point point)
+    {
+        float x = (float)(point.X - MapDrawable.OffsetX) / MapDrawable.Zoom;
+        float y = (float)(point.Y - MapDrawable.OffsetY) / MapDrawable.Zoom;
+        return ((int)Math.Floor(x / MapDrawable.TileSize), (int)Math.Floor(y / MapDrawable.TileSize));
     }
 
     private void OnPaletteTapped(object? sender, TouchEventArgs e)
@@ -80,36 +242,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private async void OnMapTapped(object? sender, TouchEventArgs e)
-    {
-        var point = e.Touches.FirstOrDefault();
-        if (point == default) return;
-        
-        float x = (point.X - MapDrawable.OffsetX) / (MapDrawable.Zoom);
-        float y = (point.Y - MapDrawable.OffsetY) / (MapDrawable.Zoom);
-
-        // Используем 80f, так как мы увеличили размер в MapDrawable
-        int tileX = (int)(x / 80f);
-        int tileY = (int)(y / 80f);
-
-        if (tileX >= 0 && tileX < _map.Width && tileY >= 0 && tileY < _map.Height)
-        {
-            var existingTile = _map.GetTile(tileX, tileY);
-            
-            // Если кликаем тем же инструментом по уже стоящему тайлу - удаляем его (ластик)
-            if (existingTile != null && existingTile.Type == _currentTool && _currentTool != TileType.Empty)
-            {
-                _map.SetTile(tileX, tileY, TileType.Empty);
-            }
-            else
-            {
-                _map.SetTile(tileX, tileY, _currentTool);
-            }
-            
-            MapGraphicsView.Invalidate();
-        }
-    }
-
     public void ChangeZoom(float delta, Point? pivot = null)
     {
         float oldZoom = MapDrawable.Zoom;
@@ -122,7 +254,6 @@ public partial class MainPage : ContentPage
 
         if (pivot.HasValue)
         {
-            // Масштабирование относительно точки (курсора)
             float worldX = (float)((pivot.Value.X - MapDrawable.OffsetX) / oldZoom);
             float worldY = (float)((pivot.Value.Y - MapDrawable.OffsetY) / oldZoom);
 
@@ -154,31 +285,7 @@ public partial class MainPage : ContentPage
     private float _startOffsetX;
     private float _startOffsetY;
 
-    private void OnPanUpdated(object? sender, PanUpdatedEventArgs e)
-    {
-        switch (e.StatusType)
-        {
-            case GestureStatus.Started:
-                _startOffsetX = MapDrawable.OffsetX;
-                _startOffsetY = MapDrawable.OffsetY;
-                break;
-            case GestureStatus.Running:
-                MapDrawable.OffsetX = _startOffsetX + (float)e.TotalX;
-                MapDrawable.OffsetY = _startOffsetY + (float)e.TotalY;
-                MapGraphicsView.Invalidate();
-                break;
-        }
-    }
-
-    private void OnToolSelected(object? sender, EventArgs e)
-    {
-        if (sender is Button button && Enum.TryParse(button.CommandParameter?.ToString(), out TileType tool))
-        {
-            _currentTool = tool;
-            PreviewDrawable.SelectedType = tool;
-            PreviewGraphicsView.Invalidate();
-        }
-    }
+    private void OnPanUpdated(object? sender, PanUpdatedEventArgs e) { }
 
     private void OnClearMapClicked(object? sender, EventArgs e)
     {
@@ -206,11 +313,11 @@ public partial class MainPage : ContentPage
             string targetPath = Path.Combine(downloadsFolder, fileName);
             
             MapSerializer.SaveToFile(_map, targetPath);
-            await DisplayAlertAsync("Успех", $"Карта успешно сохранена в Загрузки:\n{targetPath}", "OK");
+            await ShowAlertAsync("Успех", $"Карта успешно сохранена в Загрузки:\n{targetPath}", "OK");
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}", "OK");
+            await ShowAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}", "OK");
         }
     }
 
@@ -232,12 +339,12 @@ public partial class MainPage : ContentPage
                 _map = MapSerializer.LoadFromFile(result.FullPath);
                 MapDrawable.Map = _map;
                 MapGraphicsView.Invalidate();
-                await DisplayAlertAsync("Успех", "Карта загружена", "OK");
+                await ShowAlertAsync("Успех", "Карта загружена", "OK");
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Ошибка", $"Ошибка при загрузке: {ex.Message}", "OK");
+            await ShowAlertAsync("Ошибка", $"Ошибка при загрузке: {ex.Message}", "OK");
         }
     }
 
@@ -256,17 +363,17 @@ public partial class MainPage : ContentPage
 
             await MapExporter.ExportToPng(_map, targetPath);
             
-            await DisplayAlertAsync("Готово", $"Изображение карты успешно сохранено в Загрузки:\n{targetPath}", "OK");
+            await ShowAlertAsync("Готово", $"Изображение карты успешно сохранено в Загрузки:\n{targetPath}", "OK");
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Ошибка экспорта", ex.Message, "OK");
+            await ShowAlertAsync("Ошибка экспорта", ex.Message, "OK");
         }
     }
 
     private async void OnResizeMapClicked(object? sender, EventArgs e)
     {
-        string result = await DisplayActionSheetAsync("Размер карты", "Отмена", null, "30x30", "50x50", "10x10");
+        string result = await ShowActionSheetAsync("Размер карты", "Отмена", null, "30x30", "50x50", "10x10");
         if (result != null && result != "Отмена")
         {
             var parts = result.Split('x');
@@ -276,10 +383,9 @@ public partial class MainPage : ContentPage
         }
     }
 
-    // Вспомогательный метод для асинхронного вызова (MAUI Page методы)
-    private Task DisplayAlertAsync(string title, string message, string cancel) => 
+    private Task ShowAlertAsync(string title, string message, string cancel) => 
         MainThread.InvokeOnMainThreadAsync(() => DisplayAlert(title, message, cancel));
 
-    private Task<string> DisplayActionSheetAsync(string title, string cancel, string destruction, params string[] buttons) =>
+    private Task<string> ShowActionSheetAsync(string title, string cancel, string destruction, params string[] buttons) =>
         MainThread.InvokeOnMainThreadAsync(() => DisplayActionSheet(title, cancel, destruction, buttons));
 }

@@ -56,14 +56,14 @@ public static class MapExporter
         var (x, y) = type switch
         {
             TileType.RoadHorizontal => (0, 0),
-            TileType.TurnTopRight => (w, 0),
+            TileType.TurnTopLeft => (w, 0),
             TileType.Crossroad => (w * 2, 0),
             TileType.RoadVertical => (w * 3, 0),
 
-            TileType.TurnTopLeft => (0, h),
+            TileType.TurnBottomLeft => (0, h),
             TileType.Stone => (w, h),
             TileType.TurnBottomRight => (w * 2, h),
-            TileType.TurnBottomLeft => (w * 3, h),
+            TileType.TurnTopRight => (w * 3, h),
 
             TileType.TTypeRight => (0, h * 2),
             TileType.TTypeDown => (w, h * 2),

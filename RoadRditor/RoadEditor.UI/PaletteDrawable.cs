@@ -11,9 +11,9 @@ public class PaletteDrawable : IDrawable
     // Сетка 4x3 из файла Тайлы.jpg
     public readonly List<TileType> PaletteTiles = new()
     {
-        TileType.RoadHorizontal, TileType.TurnTopLeft, TileType.Crossroad, TileType.RoadVertical,
-        TileType.TurnTopRight,   TileType.Stone,       TileType.TurnBottomLeft, TileType.TurnBottomRight,
-        TileType.TTypeRight,     TileType.TTypeDown,    TileType.TTypeUp, TileType.TTypeLeft
+        TileType.RoadHorizontal, TileType.TurnTopRight,    TileType.Crossroad, TileType.RoadVertical,
+        TileType.TurnTopLeft,    TileType.Stone,           TileType.TurnBottomRight, TileType.TurnBottomLeft,
+        TileType.TTypeRight,     TileType.TTypeDown,       TileType.TTypeUp,      TileType.TTypeLeft
     };
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
