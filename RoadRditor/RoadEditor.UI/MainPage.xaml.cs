@@ -33,6 +33,32 @@ public partial class MainPage : ContentPage
         PaletteDrawable.MainDrawable = MapDrawable;
         
         BindingContext = this;
+
+#if WINDOWS
+        MapGraphicsView.HandlerChanged += (s, e) =>
+        {
+            if (MapGraphicsView.Handler?.PlatformView is Microsoft.UI.Xaml.FrameworkElement nativeView)
+            {
+                nativeView.PointerWheelChanged += (sender, args) =>
+                {
+                    var pointerPoint = args.GetCurrentPoint(nativeView);
+                    var mousePoint = new Point(pointerPoint.Position.X, pointerPoint.Position.Y);
+                    
+                    // Получаем дельту прокрутки. Обычно это 120 или -120 за один шаг колесика.
+                    int delta = pointerPoint.Properties.MouseWheelDelta;
+                    float zoomDelta = delta > 0 ? 0.15f : -0.15f;
+
+                    // Вызываем зум в основном потоке
+                    MainThread.BeginInvokeOnMainThread(() => 
+                    {
+                        ChangeZoom(zoomDelta, mousePoint);
+                    });
+
+                    args.Handled = true;
+                };
+            }
+        };
+#endif
     }
 
     private void OnPaletteTapped(object? sender, TouchEventArgs e)
@@ -84,18 +110,46 @@ public partial class MainPage : ContentPage
         }
     }
 
-    public void ChangeZoom(float delta)
+    public void ChangeZoom(float delta, Point? pivot = null)
     {
-        float newZoom = MapDrawable.Zoom + delta;
-        if (newZoom > 0.1f && newZoom < 5.0f)
+        float oldZoom = MapDrawable.Zoom;
+        float newZoom = oldZoom + delta;
+
+        if (newZoom < 0.1f) newZoom = 0.1f;
+        if (newZoom > 5.0f) newZoom = 5.0f;
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001f) return;
+
+        if (pivot.HasValue)
+        {
+            // Масштабирование относительно точки (курсора)
+            float worldX = (float)((pivot.Value.X - MapDrawable.OffsetX) / oldZoom);
+            float worldY = (float)((pivot.Value.Y - MapDrawable.OffsetY) / oldZoom);
+
+            MapDrawable.Zoom = newZoom;
+
+            MapDrawable.OffsetX = (float)(pivot.Value.X - worldX * newZoom);
+            MapDrawable.OffsetY = (float)(pivot.Value.Y - worldY * newZoom);
+        }
+        else
         {
             MapDrawable.Zoom = newZoom;
-            MapGraphicsView.Invalidate();
+        }
+
+        MapGraphicsView.Invalidate();
+    }
+
+    private void OnPinchUpdated(object? sender, PinchGestureUpdatedEventArgs e)
+    {
+        if (e.Status == GestureStatus.Running)
+        {
+            float delta = (float)(e.Scale - 1.0) * 0.5f;
+            ChangeZoom(delta, e.ScaleOrigin);
         }
     }
 
-    private void OnZoomInClicked(object? sender, EventArgs e) => ChangeZoom(0.1f);
-    private void OnZoomOutClicked(object? sender, EventArgs e) => ChangeZoom(-0.1f);
+    private void OnZoomInClicked(object? sender, EventArgs e) => ChangeZoom(0.15f);
+    private void OnZoomOutClicked(object? sender, EventArgs e) => ChangeZoom(-0.15f);
 
     private float _startOffsetX;
     private float _startOffsetY;
@@ -126,14 +180,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private string GetToolName(TileType type) => type switch
-    {
-        TileType.Empty => "Ластик",
-        TileType.RoadHorizontal => "Дорога",
-        TileType.Crossroad => "Перекресток",
-        _ => "Дорога"
-    };
-
     private void OnClearMapClicked(object? sender, EventArgs e)
     {
         _map = new RoadMap(_map.Width, _map.Height);
@@ -153,7 +199,6 @@ public partial class MainPage : ContentPage
             if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                 fileName += ".json";
 
-            // Сохраняем в папку "Загрузки" (Downloads)
             string downloadsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
             if (!Directory.Exists(downloadsFolder))
                 downloadsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -161,11 +206,11 @@ public partial class MainPage : ContentPage
             string targetPath = Path.Combine(downloadsFolder, fileName);
             
             MapSerializer.SaveToFile(_map, targetPath);
-            await DisplayAlert("Успех", $"Карта успешно сохранена в Загрузки:\n{targetPath}", "OK");
+            await DisplayAlertAsync("Успех", $"Карта успешно сохранена в Загрузки:\n{targetPath}", "OK");
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Ошибка", $"Не удалось сохранить: {ex.Message}", "OK");
+            await DisplayAlertAsync("Ошибка", $"Не удалось сохранить: {ex.Message}", "OK");
         }
     }
 
@@ -187,12 +232,12 @@ public partial class MainPage : ContentPage
                 _map = MapSerializer.LoadFromFile(result.FullPath);
                 MapDrawable.Map = _map;
                 MapGraphicsView.Invalidate();
-                await DisplayAlert("Успех", "Карта загружена", "OK");
+                await DisplayAlertAsync("Успех", "Карта загружена", "OK");
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Ошибка", $"Ошибка при загрузке: {ex.Message}", "OK");
+            await DisplayAlertAsync("Ошибка", $"Ошибка при загрузке: {ex.Message}", "OK");
         }
     }
 
@@ -206,23 +251,22 @@ public partial class MainPage : ContentPage
 
             string targetPath = Path.Combine(downloadsFolder, "ExportedMap.png");
 
-            // Удаляем старый файл, если он есть, чтобы не было конфликтов доступа
             if (File.Exists(targetPath))
                 File.Delete(targetPath);
 
             await MapExporter.ExportToPng(_map, targetPath);
             
-            await DisplayAlert("Готово", $"Изображение карты успешно сохранено в Загрузки:\n{targetPath}", "OK");
+            await DisplayAlertAsync("Готово", $"Изображение карты успешно сохранено в Загрузки:\n{targetPath}", "OK");
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Ошибка экспорта", ex.Message, "OK");
+            await DisplayAlertAsync("Ошибка экспорта", ex.Message, "OK");
         }
     }
 
     private async void OnResizeMapClicked(object? sender, EventArgs e)
     {
-        string result = await DisplayActionSheet("Размер карты", "Отмена", null, "30x30", "50x50", "10x10");
+        string result = await DisplayActionSheetAsync("Размер карты", "Отмена", null, "30x30", "50x50", "10x10");
         if (result != null && result != "Отмена")
         {
             var parts = result.Split('x');
@@ -231,4 +275,11 @@ public partial class MainPage : ContentPage
             MapGraphicsView.Invalidate();
         }
     }
+
+    // Вспомогательный метод для асинхронного вызова (MAUI Page методы)
+    private Task DisplayAlertAsync(string title, string message, string cancel) => 
+        MainThread.InvokeOnMainThreadAsync(() => DisplayAlert(title, message, cancel));
+
+    private Task<string> DisplayActionSheetAsync(string title, string cancel, string destruction, params string[] buttons) =>
+        MainThread.InvokeOnMainThreadAsync(() => DisplayActionSheet(title, cancel, destruction, buttons));
 }

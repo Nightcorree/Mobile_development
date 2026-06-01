@@ -35,12 +35,12 @@ public class PaletteDrawable : IDrawable
             if (PaletteTiles[i] == TileType.Stone || PaletteTiles[i] == TileType.Empty)
             {
                 // Рисуем просто камень (пустой тайл в центре палитры)
-                MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, x, y, Math.Min(tileW, tileH));
+                MainDrawable.DrawTileImage(canvas, TileType.Stone, x, y, Math.Min(tileW, tileH));
             }
             else
             {
                 // Сначала фон
-                MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, x, y, Math.Min(tileW, tileH));
+                MainDrawable.DrawTileImage(canvas, TileType.Stone, x, y, Math.Min(tileW, tileH));
                 // Затем дорогу
                 MainDrawable.DrawTileImage(canvas, PaletteTiles[i], x, y, Math.Min(tileW, tileH));
             }

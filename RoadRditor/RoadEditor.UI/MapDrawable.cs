@@ -59,12 +59,12 @@ public class MapDrawable : IDrawable
                 else if (tile.Type == TileType.Stone)
                 {
                     // Рисуем только "каменный" фон
-                    DrawSpritePart(canvas, 250f, 250f, 250f, x, y, currentTileSize);
+                    DrawTileImage(canvas, TileType.Stone, x, y, currentTileSize);
                 }
                 else
                 {
                     // Сначала рисуем "каменный" фон под дорогой (как в эталоне)
-                    DrawSpritePart(canvas, 250f, 250f, 250f, x, y, currentTileSize);
+                    DrawTileImage(canvas, TileType.Stone, x, y, currentTileSize);
                     
                     // Затем саму дорогу
                     DrawTileImage(canvas, tile.Type, x, y, currentTileSize);
@@ -93,45 +93,53 @@ public class MapDrawable : IDrawable
     {
         if (_spriteSheet == null) return;
 
-        var (srcX, srcY) = GetSpriteCoordinates(type);
-        DrawSpritePart(canvas, srcX, srcY, 250f, x, y, size);
+        var (srcX, srcY, srcW, srcH) = GetSpriteCoordinates(type);
+        DrawSpritePart(canvas, srcX, srcY, srcW, srcH, x, y, size);
     }
 
-    public void DrawSpritePart(ICanvas canvas, float srcX, float srcY, float srcSize, float destX, float destY, float destSize)
+    public void DrawSpritePart(ICanvas canvas, float srcX, float srcY, float srcW, float srcH, float destX, float destY, float destSize)
     {
         if (_spriteSheet == null) return;
 
         canvas.SaveState();
         canvas.ClipRectangle(destX, destY, destSize, destSize);
         
-        float scale = destSize / srcSize;
-        canvas.Translate(destX - (srcX * scale), destY - (srcY * scale));
-        canvas.DrawImage(_spriteSheet, 0, 0, _spriteSheet.Width * scale, _spriteSheet.Height * scale);
+        float scaleX = destSize / srcW;
+        float scaleY = destSize / srcH;
+        canvas.Translate(destX - (srcX * scaleX), destY - (srcY * scaleY));
+        canvas.DrawImage(_spriteSheet, 0, 0, _spriteSheet.Width * scaleX, _spriteSheet.Height * scaleY);
         
         canvas.RestoreState();
     }
 
-    private (float x, float y) GetSpriteCoordinates(TileType type) => type switch
+    private (float x, float y, float w, float h) GetSpriteCoordinates(TileType type)
     {
-        // Сетка 4x3 по 250px (картинка 1000x750)
-        // Ряд 1 (y=0)
-        TileType.RoadHorizontal => (0, 0),
-        TileType.TurnTopLeft => (250, 0),      // ┏ (по факту в спрайте это ┓, подстроим под автотайлинг)
-        TileType.Crossroad => (500, 0),
-        TileType.RoadVertical => (750, 0),
-        
-        // Ряд 2 (y=250)
-        TileType.TurnTopRight => (0, 250),    // ┓
-        // (250, 250) - это фон (камни)
-        TileType.TurnBottomLeft => (500, 250), // ┗ 
-        TileType.TurnBottomRight => (750, 250), // ┛
-        
-        // Ряд 3 (y=500)
-        TileType.TTypeRight => (0, 500),      // ┣
-        TileType.TTypeDown => (250, 500),      // ┳
-        TileType.TTypeUp => (500, 500),        // ┻
-        TileType.TTypeLeft => (750, 500),      // ┫
-        
-        _ => (250, 250) // Фон
-    };
+        if (_spriteSheet == null) return (0, 0, 0, 0);
+
+        float w = _spriteSheet.Width / 4f;
+        float h = _spriteSheet.Height / 3f;
+
+        return type switch
+        {
+            // Ряд 1 (y=0)
+            TileType.RoadHorizontal => (0, 0, w, h),
+            TileType.TurnTopRight => (w, 0, w, h),      // ┓
+            TileType.Crossroad => (w * 2, 0, w, h),
+            TileType.RoadVertical => (w * 3, 0, w, h),
+            
+            // Ряд 2 (y=h)
+            TileType.TurnTopLeft => (0, h, w, h),        // ┏
+            TileType.Stone => (w, h, w, h),             // Фон (камни)
+            TileType.TurnBottomRight => (w * 2, h, w, h), // ┛
+            TileType.TurnBottomLeft => (w * 3, h, w, h),  // ┗
+            
+            // Ряд 3 (y=2h)
+            TileType.TTypeRight => (0, h * 2, w, h),      // ┣
+            TileType.TTypeDown => (w, h * 2, w, h),       // ┳
+            TileType.TTypeUp => (w * 2, h * 2, w, h),     // ┻
+            TileType.TTypeLeft => (w * 3, h * 2, w, h),   // ┫
+            
+            _ => (w, h, w, h) // По умолчанию камень
+        };
+    }
 }

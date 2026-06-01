@@ -12,7 +12,8 @@ public static class MapExporter
         using var stream = await FileSystem.OpenAppPackageFileAsync("road_tiles.jpg");
         using var bitmap = SKBitmap.Decode(stream);
 
-        int tileSize = 250; // Размер одного тайла в спрайтлисте
+        int srcW = bitmap.Width / 4;
+        int srcH = bitmap.Height / 3;
         int outputTileSize = 100; // Размер тайла в итоговом файле
 
         int width = map.Width * outputTileSize;
@@ -32,13 +33,13 @@ public static class MapExporter
             var destRect = new SKRect(destX, destY, destX + outputTileSize, destY + outputTileSize);
 
             // 1. Рисуем фон (камень) всегда под дорогой или если это просто камень
-            var stoneRect = GetSourceRect(TileType.Stone, tileSize);
+            var stoneRect = GetSourceRect(TileType.Stone, srcW, srcH);
             canvas.DrawBitmap(bitmap, stoneRect, destRect);
 
             // 2. Если это дорога, рисуем её поверх камня
             if (tile.Type != TileType.Stone)
             {
-                var roadRect = GetSourceRect(tile.Type, tileSize);
+                var roadRect = GetSourceRect(tile.Type, srcW, srcH);
                 canvas.DrawBitmap(bitmap, roadRect, destRect);
             }
         }
@@ -50,25 +51,28 @@ public static class MapExporter
         data.SaveTo(saveStream);
     }
 
-    private static SKRect GetSourceRect(TileType type, int size)
+    private static SKRect GetSourceRect(TileType type, int w, int h)
     {
         var (x, y) = type switch
         {
             TileType.RoadHorizontal => (0, 0),
-            TileType.TurnTopLeft => (250, 0),
-            TileType.Crossroad => (500, 0),
-            TileType.RoadVertical => (750, 0),
-            TileType.TurnTopRight => (0, 250),
-            TileType.Stone => (250, 250),
-            TileType.TurnBottomLeft => (500, 250),
-            TileType.TurnBottomRight => (750, 250),
-            TileType.TTypeRight => (0, 500),
-            TileType.TTypeDown => (250, 500),
-            TileType.TTypeUp => (500, 500),
-            TileType.TTypeLeft => (750, 500),
-            _ => (250, 250)
+            TileType.TurnTopRight => (w, 0),
+            TileType.Crossroad => (w * 2, 0),
+            TileType.RoadVertical => (w * 3, 0),
+
+            TileType.TurnTopLeft => (0, h),
+            TileType.Stone => (w, h),
+            TileType.TurnBottomRight => (w * 2, h),
+            TileType.TurnBottomLeft => (w * 3, h),
+
+            TileType.TTypeRight => (0, h * 2),
+            TileType.TTypeDown => (w, h * 2),
+            TileType.TTypeUp => (w * 2, h * 2),
+            TileType.TTypeLeft => (w * 3, h * 2),
+
+            _ => (w, h)
         };
 
-        return new SKRect(x, y, x + size, y + size);
+        return new SKRect(x, y, x + w, y + h);
     }
 }

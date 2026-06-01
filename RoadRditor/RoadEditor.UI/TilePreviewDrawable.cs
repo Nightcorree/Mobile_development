@@ -17,12 +17,12 @@ public class TilePreviewDrawable : IDrawable
         if (SelectedType == TileType.Empty)
         {
             // Рисуем каменный фон
-            MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, 0, 0, size);
+            MainDrawable.DrawTileImage(canvas, TileType.Stone, 0, 0, size);
         }
         else
         {
             // Сначала каменный фон
-            MainDrawable.DrawSpritePart(canvas, 250f, 250f, 250f, 0, 0, size);
+            MainDrawable.DrawTileImage(canvas, TileType.Stone, 0, 0, size);
             // Поверх - текстура дороги
             MainDrawable.DrawTileImage(canvas, SelectedType, 0, 0, size);
         }

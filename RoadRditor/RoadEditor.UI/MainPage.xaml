@@ -46,6 +46,7 @@
                           EndInteraction="OnMapTapped">
                 <GraphicsView.GestureRecognizers>
                     <PanGestureRecognizer PanUpdated="OnPanUpdated" />
+                    <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />
                 </GraphicsView.GestureRecognizers>
             </GraphicsView>
         </ContentView>
