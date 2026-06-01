@@ -40,6 +40,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private EnvironmentModel? _currentEnvironment;
 
     public ObservableCollection<CollectionViewModel> Collections { get; } = new();
+    public ObservableCollection<HeaderViewModel> Headers { get; } = new();
     public ObservableCollection<string> Methods { get; } = new() { "GET", "POST", "PUT", "DELETE" };
 
     public MainWindowViewModel()
@@ -50,7 +51,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task LoadDataAsync()
     {
-        // Sample Environment
         CurrentEnvironment = new EnvironmentModel
         {
             Name = "Dev",
@@ -80,7 +80,14 @@ public partial class MainWindowViewModel : ViewModelBase
             Requests = new() 
             {
                 new RequestModel { Name = "Get Post 1", Method = "GET", Url = "{{baseUrl}}/posts/1" },
-                new RequestModel { Name = "Create Post", Method = "POST", Url = "{{baseUrl}}/posts", Body = "{\"title\": \"foo\", \"body\": \"bar\", \"userId\": 1}" }
+                new RequestModel 
+                { 
+                    Name = "Create Post", 
+                    Method = "POST", 
+                    Url = "{{baseUrl}}/posts", 
+                    Body = "{\"title\": \"foo\", \"body\": \"bar\", \"userId\": 1}",
+                    Headers = new() { { "Content-Type", "application/json" } }
+                }
             }
         };
         Collections.Add(new CollectionViewModel(sampleColl));
@@ -93,7 +100,30 @@ public partial class MainWindowViewModel : ViewModelBase
             Url = value.Url;
             Method = value.Method;
             RequestBody = value.Body;
+            
+            Headers.Clear();
+            foreach (var h in value.Headers)
+            {
+                Headers.Add(new HeaderViewModel { Key = h.Key, Value = h.Value, IsEnabled = h.IsEnabled });
+            }
+            // Ensure at least one empty row
+            if (Headers.Count == 0 || !string.IsNullOrWhiteSpace(Headers.Last().Key))
+            {
+                Headers.Add(new HeaderViewModel());
+            }
         }
+    }
+
+    [RelayCommand]
+    private void AddHeader()
+    {
+        Headers.Add(new HeaderViewModel());
+    }
+
+    [RelayCommand]
+    private void RemoveHeader(HeaderViewModel header)
+    {
+        Headers.Remove(header);
     }
 
     [RelayCommand]
@@ -107,7 +137,9 @@ public partial class MainWindowViewModel : ViewModelBase
             Url = Url,
             Method = Method,
             Body = RequestBody,
-            BodyType = "application/json"
+            BodyType = "application/json",
+            Headers = Headers.Where(h => h.IsEnabled && !string.IsNullOrWhiteSpace(h.Key))
+                            .ToDictionary(h => h.Key, h => h.Value)
         };
 
         var processedRequest = VariableProcessor.ProcessRequest(rawRequest, CurrentEnvironment);
@@ -130,7 +162,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (SelectedRequest != null)
         {
-            SelectedRequest.UpdateFrom(Url, Method, RequestBody);
+            SelectedRequest.UpdateFrom(Url, Method, RequestBody, Headers);
             await SaveCollectionsAsync();
             StatusText = "Request saved to collection";
         }
@@ -158,7 +190,6 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (Collections.Count > 0)
         {
-            // For now, we save only the first collection to the default path
             var model = Collections[0].ToModel();
             await FileService.SaveCollectionAsync(model, DefaultCollectionPath);
         }

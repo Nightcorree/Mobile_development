@@ -1,0 +1,23 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace ApiTester.Gui.ViewModels;
+
+public partial class HeaderViewModel : ViewModelBase
+{
+    [ObservableProperty]
+    private string _key = string.Empty;
+
+    [ObservableProperty]
+    private string _value = string.Empty;
+
+    [ObservableProperty]
+    private bool _isEnabled = true;
+
+    public HeaderViewModel() { }
+
+    public HeaderViewModel(string key, string value)
+    {
+        _key = key;
+        _value = value;
+    }
+}

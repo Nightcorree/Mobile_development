@@ -45,12 +45,19 @@ public partial class RequestViewModel : ViewModelBase
     [ObservableProperty]
     private string? _body;
 
+    public ObservableCollection<HeaderViewModel> Headers { get; } = new();
+
     public RequestViewModel(RequestModel model)
     {
         _name = string.IsNullOrEmpty(model.Name) ? "Untitled Request" : model.Name;
         _method = model.Method;
         _url = model.Url;
         _body = model.Body;
+        
+        foreach (var header in model.Headers)
+        {
+            Headers.Add(new HeaderViewModel(header.Key, header.Value));
+        }
     }
 
     public RequestModel ToModel()
@@ -61,14 +68,22 @@ public partial class RequestViewModel : ViewModelBase
             Method = Method,
             Url = Url,
             Body = Body,
-            BodyType = "application/json"
+            BodyType = "application/json",
+            Headers = Headers.Where(h => !string.IsNullOrWhiteSpace(h.Key))
+                            .ToDictionary(h => h.Key, h => h.Value)
         };
     }
 
-    public void UpdateFrom(string url, string method, string? body)
+    public void UpdateFrom(string url, string method, string? body, ObservableCollection<HeaderViewModel> headers)
     {
         Url = url;
         Method = method;
         Body = body;
+        
+        Headers.Clear();
+        foreach (var h in headers)
+        {
+            Headers.Add(new HeaderViewModel { Key = h.Key, Value = h.Value, IsEnabled = h.IsEnabled });
+        }
     }
 }

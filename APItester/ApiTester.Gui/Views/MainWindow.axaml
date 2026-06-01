@@ -45,8 +45,8 @@
         <GridSplitter Grid.Column="1" Background="LightGray"/>
 
         <!-- Main Content -->
-        <Grid Grid.Column="2" RowDefinitions="Auto, Auto, 1*, Auto, 1*, Auto" Margin="10">
-            <!-- Request Section -->
+        <Grid Grid.Column="2" RowDefinitions="Auto, *" Margin="10">
+            <!-- URL Bar -->
             <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,10">
                 <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
                 <TextBox Grid.Column="1" Text="{Binding Url}" PlaceholderText="Enter URL (https://...)" VerticalContentAlignment="Center"/>
@@ -54,17 +54,47 @@
                 <Button Grid.Column="3" Content="Send" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Ctrl+Enter" Classes="accent"/>
             </Grid>
 
-            <TextBlock Grid.Row="1" Text="Request Body (JSON):" Margin="0,0,0,5"/>
-            <TextBox Grid.Row="2" Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,0,0,10"/>
+            <!-- Tabs / Editors -->
+            <Grid Grid.Row="1" RowDefinitions="*, 4, *, Auto">
+                <TabControl Grid.Row="0">
+                    <TabItem Header="Body">
+                        <TextBox Text="{Binding RequestBody}" AcceptsReturn="True" PlaceholderText="{}{ ... }" Margin="0,5,0,0"/>
+                    </TabItem>
+                    <TabItem Header="Headers">
+                        <Grid RowDefinitions="*, Auto">
+                            <DataGrid Grid.Row="0" ItemsSource="{Binding Headers}" AutoGenerateColumns="False" CanUserResizeColumns="True">
+                                <DataGrid.Columns>
+                                    <DataGridCheckBoxColumn Header="" Binding="{Binding IsEnabled}" Width="Auto"/>
+                                    <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="*"/>
+                                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
+                                    <DataGridTemplateColumn Width="Auto">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="X" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveHeaderCommand}" 
+                                                        CommandParameter="{Binding}" Padding="5,2" Background="Transparent" Foreground="Red"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <Button Grid.Row="1" Content="+ Add Header" Command="{Binding AddHeaderCommand}" Margin="0,5,0,0" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
 
-            <!-- Response Section -->
-            <TextBlock Grid.Row="3" Text="Response:" Margin="0,10,0,5"/>
-            <TextBox Grid.Row="4" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+                <GridSplitter Grid.Row="1" Background="LightGray" Margin="0,5"/>
 
-            <!-- Status Bar -->
-            <Border Grid.Row="5" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
-                <TextBlock Text="{Binding StatusText}" FontSize="12"/>
-            </Border>
+                <!-- Response Section -->
+                <Grid Grid.Row="2" RowDefinitions="Auto, *">
+                    <TextBlock Grid.Row="0" Text="Response:" Margin="0,5,0,5" FontWeight="Bold"/>
+                    <TextBox Grid.Row="1" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" PlaceholderText="Response will appear here..."/>
+                </Grid>
+
+                <!-- Status Bar -->
+                <Border Grid.Row="3" Background="#F0F0F0" Padding="5" Margin="0,10,0,0">
+                    <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 
