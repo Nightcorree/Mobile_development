@@ -24,6 +24,9 @@
             <Setter Property="Background" Value="{DynamicResource SystemAccentColorLight1}"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
+        <Style Selector="TreeViewItem">
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
     </Window.Styles>
 
     <Window.KeyBindings>
@@ -60,7 +63,7 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1" ColumnDefinitions="280, 1, *">
+        <Grid Grid.Row="1" ColumnDefinitions="300, 1, *">
             <!-- Sidebar -->
             <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
                 <Grid RowDefinitions="Auto, *">
@@ -83,11 +86,20 @@
                                 </StackPanel>
                             </TreeDataTemplate>
                             <DataTemplate DataType="vm:RequestViewModel">
-                                <StackPanel Orientation="Horizontal" Margin="0,2" Spacing="8">
-                                    <TextBlock Text="{Binding Method}" Width="40" FontSize="10" VerticalAlignment="Center" 
-                                               FontWeight="Bold" Foreground="{DynamicResource SystemAccentColor}"/>
-                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                </StackPanel>
+                                <Grid ColumnDefinitions="Auto, *, Auto" Margin="0,2">
+                                    <TextBlock Grid.Column="0" Text="{Binding Method}" Width="40" FontSize="10" 
+                                               VerticalAlignment="Center" FontWeight="Bold" 
+                                               Foreground="{DynamicResource SystemAccentColor}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" 
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <Button Grid.Column="2" 
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveRequestCommand}" 
+                                            CommandParameter="{Binding}"
+                                            Padding="4" Background="Transparent" BorderThickness="0"
+                                            ToolTip.Tip="Delete Request">
+                                        <ic:SymbolIcon Symbol="Delete" FontSize="14" Foreground="Red"/>
+                                    </Button>
+                                </Grid>
                             </DataTemplate>
                         </TreeView.DataTemplates>
                     </TreeView>
@@ -98,9 +110,14 @@
             <GridSplitter Grid.Column="1" Background="Transparent"/>
 
             <!-- Main Content -->
-            <Grid Grid.Column="2" RowDefinitions="Auto, *" Margin="20">
+            <Grid Grid.Column="2" RowDefinitions="Auto, Auto, *" Margin="20">
+                <!-- Name Row -->
+                <TextBox Grid.Row="0" Text="{Binding RequestName}" Watermark="Request Name" 
+                         FontSize="18" FontWeight="SemiBold" BorderThickness="0" Background="Transparent" 
+                         Margin="0,0,0,10" Padding="0"/>
+
                 <!-- URL Bar -->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,20">
+                <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,20">
                     <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
                     <TextBox Grid.Column="1" Text="{Binding Url}" Watermark="Enter URL (https://...)" VerticalContentAlignment="Center" FontWeight="Medium" FontSize="14"/>
                     <Button Grid.Column="2" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Save (Ctrl+S)" Padding="10,6">
@@ -115,7 +132,7 @@
                 </Grid>
 
                 <!-- Tabs / Editors -->
-                <Grid Grid.Row="1" RowDefinitions="2*, 4, 1*, Auto">
+                <Grid Grid.Row="2" RowDefinitions="2*, 4, 1*, Auto">
                     <TabControl Grid.Row="0">
                         <TabItem>
                             <TabItem.Header>

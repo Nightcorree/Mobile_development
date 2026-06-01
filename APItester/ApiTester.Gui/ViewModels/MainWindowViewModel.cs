@@ -19,6 +19,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private const string DefaultEnvironmentsPath = "environments.json";
 
     [ObservableProperty]
+    private string _requestName = "New Request";
+
+    [ObservableProperty]
     private string _url = "{{baseUrl}}/posts/1";
 
     [ObservableProperty]
@@ -55,7 +58,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task LoadDataAsync()
     {
-        // Load Environments
         if (File.Exists(DefaultEnvironmentsPath))
         {
             try
@@ -72,16 +74,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (Environments.Count == 0)
         {
-            var defaultEnv = new EnvironmentModel
-            {
-                Name = "No Environment",
-                Variables = new()
-            };
-            var devEnv = new EnvironmentModel
-            {
-                Name = "Dev",
-                Variables = new() { { "baseUrl", "https://jsonplaceholder.typicode.com" } }
-            };
+            var defaultEnv = new EnvironmentModel { Name = "No Environment", Variables = new() };
+            var devEnv = new EnvironmentModel { Name = "Dev", Variables = new() { { "baseUrl", "https://jsonplaceholder.typicode.com" } } };
             Environments.Add(new EnvironmentViewModel(defaultEnv));
             Environments.Add(new EnvironmentViewModel(devEnv));
             await SaveEnvironmentsAsync();
@@ -89,13 +83,16 @@ public partial class MainWindowViewModel : ViewModelBase
 
         CurrentEnvironment = Environments.FirstOrDefault(e => e.Name != "No Environment") ?? Environments.First();
 
-        // Load Collections
         if (File.Exists(DefaultCollectionPath))
         {
             var loaded = await FileService.LoadCollectionAsync(DefaultCollectionPath);
             if (loaded != null)
             {
                 Collections.Add(new CollectionViewModel(loaded));
+                if (Collections[0].Requests.Count > 0)
+                {
+                    SelectedRequest = Collections[0].Requests[0];
+                }
             }
         }
         else
@@ -113,23 +110,18 @@ public partial class MainWindowViewModel : ViewModelBase
             Requests = new() 
             {
                 new RequestModel { Name = "Get Post 1", Method = "GET", Url = "{{baseUrl}}/posts/1" },
-                new RequestModel 
-                { 
-                    Name = "Create Post", 
-                    Method = "POST", 
-                    Url = "{{baseUrl}}/posts", 
-                    Body = "{\"title\": \"foo\", \"body\": \"bar\", \"userId\": 1}",
-                    Headers = new() { { "Content-Type", "application/json" } }
-                }
+                new RequestModel { Name = "Create Post", Method = "POST", Url = "{{baseUrl}}/posts", Body = "{\"title\": \"foo\", \"body\": \"bar\", \"userId\": 1}" }
             }
         };
         Collections.Add(new CollectionViewModel(sampleColl));
+        SelectedRequest = Collections[0].Requests[0];
     }
 
     partial void OnSelectedRequestChanged(RequestViewModel? value)
     {
         if (value != null)
         {
+            RequestName = value.Name;
             Url = value.Url;
             Method = value.Method;
             RequestBody = value.Body;
@@ -143,6 +135,14 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 Headers.Add(new HeaderViewModel());
             }
+        }
+    }
+
+    partial void OnRequestNameChanged(string value)
+    {
+        if (SelectedRequest != null)
+        {
+            SelectedRequest.Name = value;
         }
     }
 
@@ -173,7 +173,16 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var response = await _httpClientService.SendRequestAsync(processedRequest);
-            ResponseText = response.Body;
+            
+            if (response.ContentType?.Contains("application/json") == true && !string.IsNullOrEmpty(response.Body))
+            {
+                try {
+                    var obj = JsonSerializer.Deserialize<JsonElement>(response.Body);
+                    ResponseText = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+                } catch { ResponseText = response.Body; }
+            }
+            else { ResponseText = response.Body; }
+
             StatusText = $"Status: {response.StatusCode} | Time: {response.ResponseTime.TotalMilliseconds:F0}ms";
         }
         catch (Exception ex)
@@ -189,12 +198,9 @@ public partial class MainWindowViewModel : ViewModelBase
         if (SelectedRequest != null)
         {
             SelectedRequest.UpdateFrom(Url, Method, RequestBody, Headers);
+            SelectedRequest.Name = RequestName;
             await SaveCollectionsAsync();
             StatusText = "Request saved to collection";
-        }
-        else
-        {
-            StatusText = "Select a request from sidebar to save changes";
         }
     }
 
@@ -210,6 +216,25 @@ public partial class MainWindowViewModel : ViewModelBase
         Collections[0].Requests.Add(newReq);
         SelectedRequest = newReq;
         await SaveCollectionsAsync();
+    }
+
+    [RelayCommand]
+    private async Task RemoveRequest(RequestViewModel request)
+    {
+        foreach (var collection in Collections)
+        {
+            if (collection.Requests.Contains(request))
+            {
+                collection.Requests.Remove(request);
+                if (SelectedRequest == request)
+                {
+                    SelectedRequest = collection.Requests.FirstOrDefault();
+                }
+                await SaveCollectionsAsync();
+                StatusText = "Request deleted";
+                break;
+            }
+        }
     }
 
     private async Task SaveCollectionsAsync()
