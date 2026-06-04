@@ -1,5 +1,4 @@
 <Solution>
-  <Project Path="RoadEditor.CLI/RoadEditor.CLI.csproj" />
   <Project Path="RoadEditor.Core/RoadEditor.Core.csproj" />
   <Project Path="RoadEditor.UI/RoadEditor.UI.csproj" />
 </Solution>
