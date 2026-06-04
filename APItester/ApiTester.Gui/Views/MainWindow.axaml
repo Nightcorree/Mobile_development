@@ -66,7 +66,7 @@
         <Grid Grid.Row="1" ColumnDefinitions="300, 1, *">
             <!-- Sidebar -->
             <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
-                <Grid RowDefinitions="Auto, Auto, *">
+                <Grid RowDefinitions="Auto, Auto, Auto, *">
                     <Grid Grid.Row="0" ColumnDefinitions="*, *" Margin="12,12,12,0">
                         <Button Grid.Column="0" Command="{Binding AddRequestCommand}" 
                                 HorizontalAlignment="Stretch" Classes="accent" Padding="0,8" Margin="0,0,5,0">
@@ -83,15 +83,25 @@
                             </StackPanel>
                         </Button>
                     </Grid>
+
+                    <!-- Search Bar -->
+                    <TextBox Grid.Row="1" Text="{Binding SearchQuery}" Watermark="Поиск..." Margin="12,10,12,0" Padding="8,5">
+                        <TextBox.InnerLeftContent>
+                            <ic:SymbolIcon Symbol="Search" FontSize="16" Margin="8,0,0,0" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </TextBox.InnerLeftContent>
+                    </TextBox>
                     
-                    <TreeView Grid.Row="2" ItemsSource="{Binding Collections}" 
+                    <TreeView Grid.Row="3" ItemsSource="{Binding FilteredCollections}" 
                               SelectedItem="{Binding SelectedItem}"
                               Background="Transparent">
                         <TreeView.DataTemplates>
                             <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
                                 <Grid ColumnDefinitions="Auto, *, Auto">
                                     <ic:SymbolIcon Grid.Column="0" Symbol="Folder" FontSize="16" Margin="0,0,8,0" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" 
+                                             VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                             Background="Transparent" BorderThickness="0" 
+                                             Padding="4,0" Margin="0" MinHeight="0"/>
                                     <Button Grid.Column="2" 
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveCollectionCommand}" 
                                             CommandParameter="{Binding}"
@@ -134,11 +144,14 @@
                 <!-- URL Bar -->
                 <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,20">
                     <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding Method}" Width="100" Margin="0,0,10,0"/>
-                    <TextBox Grid.Column="1" Text="{Binding Url}" Watermark="Введите URL (https://...)" VerticalContentAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                    <Grid Grid.Column="1">
+                        <TextBox Text="{Binding Url}" Watermark="Введите URL (https://...)" VerticalContentAlignment="Center" FontWeight="Medium" FontSize="14"/>
+                        <ProgressBar IsVisible="{Binding IsLoading}" IsIndeterminate="True" Height="2" VerticalAlignment="Bottom" Background="Transparent" Foreground="{DynamicResource SystemAccentColor}"/>
+                    </Grid>
                     <Button Grid.Column="2" Command="{Binding SaveCurrentRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Сохранить (Ctrl+S)" Padding="10,6">
                         <ic:SymbolIcon Symbol="Save" FontSize="18"/>
                     </Button>
-                    <Button Grid.Column="3" Command="{Binding SendRequestCommand}" Margin="10,0,0,0" ToolTip.Tip="Отправить (Ctrl+Enter)" Classes="accent" FontWeight="Bold" MinWidth="130" HorizontalContentAlignment="Center" Padding="15,6">
+                    <Button Grid.Column="3" Command="{Binding SendRequestCommand}" IsEnabled="{Binding !IsLoading}" Margin="10,0,0,0" ToolTip.Tip="Отправить (Ctrl+Enter)" Classes="accent" FontWeight="Bold" MinWidth="130" HorizontalContentAlignment="Center" Padding="15,6">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <ic:SymbolIcon Symbol="Send" FontSize="16"/>
                             <TextBlock Text="Отправить"/>

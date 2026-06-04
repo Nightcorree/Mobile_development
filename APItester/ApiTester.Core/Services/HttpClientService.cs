@@ -16,6 +16,17 @@ public class HttpClientService : IDisposable
 
     public async Task<ResponseModel> SendRequestAsync(RequestModel request)
     {
+        if (string.IsNullOrWhiteSpace(request.Url) || !Uri.TryCreate(request.Url, UriKind.Absolute, out _))
+        {
+            return new ResponseModel
+            {
+                StatusCode = 0,
+                Body = "Error: Invalid or empty URL. Make sure it starts with http:// or https://",
+                ResponseTime = TimeSpan.Zero
+            };
+        }
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         var httpRequest = new HttpRequestMessage(new HttpMethod(request.Method), request.Url);
 
         foreach (var header in request.Headers)
@@ -32,7 +43,7 @@ public class HttpClientService : IDisposable
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            using var response = await _httpClient.SendAsync(httpRequest);
+            using var response = await _httpClient.SendAsync(httpRequest, cts.Token);
             stopwatch.Stop();
 
             var responseModel = new ResponseModel

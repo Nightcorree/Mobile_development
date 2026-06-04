@@ -9,12 +9,26 @@ public static class VariableProcessor
 
     public static string Process(string input, EnvironmentModel? environment)
     {
-        if (string.IsNullOrEmpty(input) || environment == null)
+        if (string.IsNullOrEmpty(input))
             return input;
 
         return VariableRegex.Replace(input, match =>
         {
             var key = match.Groups[1].Value;
+            
+            // System Variables
+            if (key.StartsWith("$"))
+            {
+                return key switch
+                {
+                    "$guid" => Guid.NewGuid().ToString(),
+                    "$timestamp" => DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                    "$randomInt" => new Random().Next(0, 1000).ToString(),
+                    _ => match.Value
+                };
+            }
+
+            if (environment == null) return match.Value;
             return environment.Variables.TryGetValue(key, out var value) ? value : match.Value;
         });
     }

@@ -41,6 +41,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _statusText = "Готов";
 
     [ObservableProperty]
+    private string _searchQuery = string.Empty;
+
+    [ObservableProperty]
+    private bool _isLoading;
+
+    [ObservableProperty]
     private object? _selectedItem;
 
     [ObservableProperty]
@@ -50,6 +56,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private EnvironmentViewModel? _currentEnvironment;
 
     public ObservableCollection<CollectionViewModel> Collections { get; } = new();
+    public ObservableCollection<CollectionViewModel> FilteredCollections { get; } = new();
     public ObservableCollection<HeaderViewModel> Headers { get; } = new();
     public ObservableCollection<EnvironmentViewModel> Environments { get; } = new();
     public ObservableCollection<string> Methods { get; } = new() { "GET", "POST", "PUT", "DELETE" };
@@ -57,6 +64,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel()
     {
         _httpClientService = new HttpClientService();
+        CollectionViewModel.RequestSave = () => _ = SaveCollectionsAsync();
         _ = LoadDataAsync();
     }
 
@@ -107,6 +115,8 @@ public partial class MainWindowViewModel : ViewModelBase
             await SaveCollectionsAsync();
         }
 
+        UpdateFilteredCollections();
+
         if (Collections.Count > 0 && Collections[0].Requests.Count > 0)
         {
             SelectedItem = Collections[0].Requests[0];
@@ -126,6 +136,33 @@ public partial class MainWindowViewModel : ViewModelBase
         };
         Collections.Add(new CollectionViewModel(sampleColl));
     }
+
+    private void UpdateFilteredCollections()
+    {
+        FilteredCollections.Clear();
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            foreach (var c in Collections) FilteredCollections.Add(c);
+            return;
+        }
+
+        var query = SearchQuery.ToLower();
+        foreach (var collection in Collections)
+        {
+            var filteredRequests = collection.Requests
+                .Where(r => r.Name.ToLower().Contains(query) || r.Url.ToLower().Contains(query))
+                .ToList();
+
+            if (collection.Name.ToLower().Contains(query) || filteredRequests.Any())
+            {
+                var newColl = new CollectionViewModel(new CollectionModel { Name = collection.Name });
+                foreach (var r in filteredRequests) newColl.Requests.Add(r);
+                FilteredCollections.Add(newColl);
+            }
+        }
+    }
+
+    partial void OnSearchQueryChanged(string value) => UpdateFilteredCollections();
 
     partial void OnSelectedItemChanged(object? value)
     {
@@ -173,6 +210,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task SendRequest()
     {
+        IsLoading = true;
         StatusText = "Отправка...";
         ResponseText = string.Empty;
 
@@ -208,6 +246,10 @@ public partial class MainWindowViewModel : ViewModelBase
             ResponseText = $"Ошибка: {ex.Message}";
             StatusText = "Ошибка";
         }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [RelayCommand]
@@ -218,6 +260,7 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedRequest.UpdateFrom(Url, Method, RequestBody, Headers);
             SelectedRequest.Name = RequestName;
             await SaveCollectionsAsync();
+            UpdateFilteredCollections();
             StatusText = "Успешно сохранено";
         }
     }
@@ -248,6 +291,7 @@ public partial class MainWindowViewModel : ViewModelBase
         targetCollection.Requests.Add(newReq);
         SelectedItem = newReq;
         await SaveCollectionsAsync();
+        UpdateFilteredCollections();
     }
 
     [RelayCommand]
@@ -262,6 +306,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     collection.Requests.Remove(request);
                     if (SelectedRequest == request) SelectedItem = null;
                     await SaveCollectionsAsync();
+                    UpdateFilteredCollections();
                     StatusText = "Запрос удален";
                     break;
                 }
@@ -276,6 +321,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Collections.Add(newColl);
         SelectedItem = newColl;
         await SaveCollectionsAsync();
+        UpdateFilteredCollections();
     }
 
     [RelayCommand]
@@ -285,6 +331,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Collections.Remove(collection);
             await SaveCollectionsAsync();
+            UpdateFilteredCollections();
             StatusText = "Коллекция удалена";
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using ApiTester.Core.Models;
@@ -9,6 +10,13 @@ public partial class CollectionViewModel : ViewModelBase
 {
     [ObservableProperty]
     private string _name;
+
+    public static Action? RequestSave { get; set; }
+
+    partial void OnNameChanged(string value)
+    {
+        RequestSave?.Invoke();
+    }
 
     public ObservableCollection<RequestViewModel> Requests { get; } = new();
 
