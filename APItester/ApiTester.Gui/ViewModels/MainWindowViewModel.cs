@@ -70,7 +70,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task LoadDataAsync()
     {
-        // Load Environments
         if (File.Exists(DefaultEnvironmentsPath))
         {
             try
@@ -94,7 +93,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
         CurrentEnvironment = Environments.First();
 
-        // Load Collections
         if (File.Exists(DefaultCollectionPath))
         {
             try

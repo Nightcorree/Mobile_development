@@ -21,7 +21,7 @@ public class HttpClientService : IDisposable
             return new ResponseModel
             {
                 StatusCode = 0,
-                Body = "Error: Invalid or empty URL. Make sure it starts with http:// or https://",
+                Body = "Ошибка: Некорректный или пустой URL. Убедитесь, что он начинается с http:// или https://",
                 ResponseTime = TimeSpan.Zero
             };
         }
@@ -73,7 +73,7 @@ public class HttpClientService : IDisposable
             return new ResponseModel
             {
                 StatusCode = 0,
-                Body = $"Error: {ex.Message}",
+                Body = $"Ошибка: {ex.Message}",
                 ResponseTime = stopwatch.Elapsed
             };
         }

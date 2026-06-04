@@ -8,15 +8,10 @@ namespace ApiTester.Gui.ViewModels;
 
 public partial class CollectionViewModel : ViewModelBase
 {
-    [ObservableProperty]
-    private string _name;
-
     public static Action? RequestSave { get; set; }
 
-    partial void OnNameChanged(string value)
-    {
-        RequestSave?.Invoke();
-    }
+    [ObservableProperty]
+    private string _name;
 
     public ObservableCollection<RequestViewModel> Requests { get; } = new();
 
@@ -37,6 +32,8 @@ public partial class CollectionViewModel : ViewModelBase
             Requests = Requests.Select(r => r.ToModel()).ToList()
         };
     }
+
+    partial void OnNameChanged(string value) => RequestSave?.Invoke();
 }
 
 public partial class RequestViewModel : ViewModelBase

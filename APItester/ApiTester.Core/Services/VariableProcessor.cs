@@ -16,7 +16,6 @@ public static class VariableProcessor
         {
             var key = match.Groups[1].Value;
             
-            // System Variables
             if (key.StartsWith("$"))
             {
                 return key switch
