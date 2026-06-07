@@ -125,6 +125,13 @@
                                                     <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
                                                 </MenuItem.Icon>
                                             </MenuItem>
+                                            <MenuItem Header="Дублировать" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DuplicateCollectionCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Copy" FontSize="16"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
                                             <MenuItem Header="Удалить" 
                                                       Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveCollectionCommand}" 
                                                       CommandParameter="{Binding}">
@@ -148,6 +155,13 @@
                                                       CommandParameter="{Binding}">
                                                 <MenuItem.Icon>
                                                     <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Дублировать" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DuplicateRequestCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Copy" FontSize="16"/>
                                                 </MenuItem.Icon>
                                             </MenuItem>
                                             <MenuItem Header="Удалить" 
@@ -302,10 +316,19 @@
 
                     <!-- Response Section -->
                     <Grid Grid.Row="2" RowDefinitions="Auto, *">
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,5,0,10" Spacing="8">
-                            <ic:SymbolIcon Symbol="History" FontSize="16"/>
-                            <TextBlock Text="Ответ" FontWeight="Bold" FontSize="14"/>
-                        </StackPanel>
+                        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,5,0,10">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <ic:SymbolIcon Symbol="History" FontSize="16"/>
+                                <TextBlock Text="Ответ" FontWeight="Bold" FontSize="14"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Command="{Binding CopyResponseCommand}" 
+                                    ToolTip.Tip="Копировать ответ" Padding="8,4" Background="Transparent" BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <ic:SymbolIcon Symbol="Copy" FontSize="14"/>
+                                    <TextBlock Text="Копировать" FontSize="12"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
                         <TextBox Grid.Row="1" Text="{Binding ResponseText}" IsReadOnly="True" AcceptsReturn="True" 
                                  Watermark="Ответ появится здесь..." 
                                  FontFamily="Consolas,Monaco,Andale Mono,Ubuntu Mono,monospace"

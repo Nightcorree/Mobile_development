@@ -319,6 +319,50 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task DuplicateRequest(RequestViewModel request)
+    {
+        var collection = Collections.FirstOrDefault(c => c.Requests.Contains(request));
+        if (collection != null)
+        {
+            var model = request.ToModel();
+            model.Name += " (Копия)";
+            var newReq = new RequestViewModel(model);
+            collection.Requests.Add(newReq);
+            await SaveCollectionsAsync();
+            SelectedItem = newReq;
+            StatusText = "Запрос продублирован";
+        }
+    }
+
+    [RelayCommand]
+    private async Task DuplicateCollection(CollectionViewModel collection)
+    {
+        var model = collection.ToModel();
+        model.Name += " (Копия)";
+        var newColl = new CollectionViewModel(model);
+        Collections.Add(newColl);
+        await SaveCollectionsAsync();
+        SelectedItem = newColl;
+        StatusText = "Коллекция продублирована";
+    }
+
+    [RelayCommand]
+    private async Task CopyResponse()
+    {
+        if (string.IsNullOrEmpty(ResponseText)) return;
+        
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var clipboard = desktop.MainWindow?.Clipboard;
+            if (clipboard != null)
+            {
+                await clipboard.SetTextAsync(ResponseText);
+                StatusText = "Ответ скопирован в буфер обмена";
+            }
+        }
+    }
+
+    [RelayCommand]
     private async Task RemoveRequest(RequestViewModel request)
     {
         if (await ShowConfirmDialog($"Вы точно хотите удалить запрос \"{request.Name}\"?"))
