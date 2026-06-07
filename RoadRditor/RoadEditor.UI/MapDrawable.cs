@@ -8,13 +8,14 @@ public enum ToolMode { Navigate, DrawLine, DrawRect, Eraser }
 public class MapDrawable : IDrawable
 {
     public RoadMap? Map { get; set; }
-    public float TileSize { get; set; } = 80f; // Увеличил размер ячеек по умолчанию
+    public float TileSize { get; set; } = 80f; 
     public float OffsetX { get; set; } = 0f;
     public float OffsetY { get; set; } = 0f;
     public float Zoom { get; set; } = 1.0f;
 
     // Свойства для предпросмотра выделения
     public ToolMode CurrentMode { get; set; } = ToolMode.DrawRect;
+    public bool IsCtrlPressed { get; set; } = false;
     public Point? SelectionStart { get; set; }
     public Point? SelectionEnd { get; set; }
 
@@ -52,8 +53,7 @@ public class MapDrawable : IDrawable
         endX = Math.Min(Map.Width - 1, endX);
         endY = Math.Min(Map.Height - 1, endY);
 
-        // 1. Фон (Темный как в эталоне)
-        // Рисуем фон только для видимой части карты
+        // 1. Рисуем фон только для видимой части карты
         float mapScreenWidth = Map.Width * scaledTileSize;
         float mapScreenHeight = Map.Height * scaledTileSize;
         
@@ -121,6 +121,8 @@ public class MapDrawable : IDrawable
         if (!SelectionStart.HasValue || !SelectionEnd.HasValue) return;
 
         canvas.FillColor = Color.FromRgba(255, 255, 255, 80); 
+        canvas.StrokeColor = Color.FromRgba(255, 255, 255, 150);
+        canvas.StrokeSize = 2f;
         
         int x1 = (int)SelectionStart.Value.X;
         int y1 = (int)SelectionStart.Value.Y;
@@ -134,7 +136,14 @@ public class MapDrawable : IDrawable
             int w = Math.Abs(x1 - x2) + 1;
             int h = Math.Abs(y1 - y2) + 1;
 
-            canvas.FillRectangle(OffsetX + sX * scaledTileSize, OffsetY + sY * scaledTileSize, w * scaledTileSize, h * scaledTileSize);
+            if (IsCtrlPressed && CurrentMode == ToolMode.DrawRect)
+            {
+                canvas.DrawRectangle(OffsetX + sX * scaledTileSize, OffsetY + sY * scaledTileSize, w * scaledTileSize, h * scaledTileSize);
+            }
+            else
+            {
+                canvas.FillRectangle(OffsetX + sX * scaledTileSize, OffsetY + sY * scaledTileSize, w * scaledTileSize, h * scaledTileSize);
+            }
         }
         else if (CurrentMode == ToolMode.DrawLine)
         {

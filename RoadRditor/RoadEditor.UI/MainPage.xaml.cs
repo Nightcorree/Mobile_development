@@ -108,6 +108,7 @@ public partial class MainPage : ContentPage
         if (point == default) return;
 
         _dragStartPoint = point;
+        MapDrawable.IsCtrlPressed = IsCtrlPressed();
 
         if (_currentMode == ToolMode.Navigate)
         {
@@ -133,6 +134,8 @@ public partial class MainPage : ContentPage
     {
         var point = e.Touches.FirstOrDefault();
         if (point == default || _dragStartPoint == null) return;
+
+        MapDrawable.IsCtrlPressed = IsCtrlPressed();
 
         if (_currentMode == ToolMode.Navigate)
         {
@@ -171,6 +174,7 @@ public partial class MainPage : ContentPage
         _dragStartPoint = null;
         MapDrawable.SelectionStart = null;
         MapDrawable.SelectionEnd = null;
+        MapDrawable.IsCtrlPressed = false;
         MapGraphicsView.Invalidate();
     }
 
@@ -184,6 +188,7 @@ public partial class MainPage : ContentPage
         int y2 = (int)MapDrawable.SelectionEnd.Value.Y;
 
         HashSet<(int x, int y)> affectedTiles = new();
+        bool isCtrl = IsCtrlPressed();
 
         if (_currentMode == ToolMode.DrawRect || _currentMode == ToolMode.Eraser)
         {
@@ -196,8 +201,20 @@ public partial class MainPage : ContentPage
             {
                 for (int y = startY; y <= endY; y++)
                 {
-                    PlaceTile(x, y, toolToUse, false);
-                    affectedTiles.Add((x, y));
+                    if (isCtrl && _currentMode == ToolMode.DrawRect)
+                    {
+                        // Рисуем только по контуру
+                        if (x == startX || x == endX || y == startY || y == endY)
+                        {
+                            PlaceTile(x, y, TileType.RoadHorizontal, false);
+                            affectedTiles.Add((x, y));
+                        }
+                    }
+                    else
+                    {
+                        PlaceTile(x, y, toolToUse, false);
+                        affectedTiles.Add((x, y));
+                    }
                 }
             }
         }
@@ -230,6 +247,16 @@ public partial class MainPage : ContentPage
         {
             RoadAutomation.AutoUpdateNeighbors(_map, x, y);
         }
+    }
+
+    private bool IsCtrlPressed()
+    {
+#if WINDOWS
+        var state = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        return state.HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+#else
+        return false;
+#endif
     }
 
     private void PlaceTile(int x, int y, TileType type, bool updateNeighbors = true)
