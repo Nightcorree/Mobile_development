@@ -82,107 +82,155 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1" ColumnDefinitions="300, 1, *">
+        <Grid Grid.Row="1" ColumnDefinitions="350, 1, *">
             <!-- Sidebar -->
             <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
-                <Grid RowDefinitions="Auto, Auto, Auto, *">
-                    <Grid Grid.Row="0" ColumnDefinitions="*, *" Margin="12,12,12,0">
-                        <Button Grid.Column="0" Command="{Binding AddRequestCommand}" 
-                                HorizontalAlignment="Stretch" Classes="accent" Padding="0,8" Margin="0,0,5,0">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                                <ic:SymbolIcon Symbol="Add" FontSize="16"/>
-                                <TextBlock Text="Запрос"/>
+                <TabControl>
+                    <!-- Collections Tab -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ic:SymbolIcon Symbol="Folder" FontSize="14"/>
+                                <TextBlock Text="Коллекции"/>
                             </StackPanel>
-                        </Button>
-                        <Button Grid.Column="1" Command="{Binding AddCollectionCommand}" 
-                                HorizontalAlignment="Stretch" Padding="0,8" Margin="5,0,0,0">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                                <ic:SymbolIcon Symbol="FolderAdd" FontSize="16"/>
-                                <TextBlock Text="Коллекция"/>
-                            </StackPanel>
-                        </Button>
-                    </Grid>
+                        </TabItem.Header>
+                        <Grid RowDefinitions="Auto, Auto, *">
+                            <Grid Grid.Row="0" ColumnDefinitions="*, *" Margin="12,12,12,0">
+                                <Button Grid.Column="0" Command="{Binding AddRequestCommand}" 
+                                        HorizontalAlignment="Stretch" Classes="accent" Padding="0,8" Margin="0,0,5,0">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                        <ic:SymbolIcon Symbol="Add" FontSize="16"/>
+                                        <TextBlock Text="Запрос"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="1" Command="{Binding AddCollectionCommand}" 
+                                        HorizontalAlignment="Stretch" Padding="0,8" Margin="5,0,0,0">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                                        <ic:SymbolIcon Symbol="FolderAdd" FontSize="16"/>
+                                        <TextBlock Text="Коллекция"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
 
-                    <!-- Search Bar -->
-                    <TextBox Grid.Row="1" Text="{Binding SearchQuery}" Watermark="Поиск..." Margin="12,10,12,0" Padding="8,5">
-                        <TextBox.InnerLeftContent>
-                            <ic:SymbolIcon Symbol="Search" FontSize="16" Margin="8,0,0,0" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                        </TextBox.InnerLeftContent>
-                    </TextBox>
-                    
-                    <TreeView Grid.Row="3" ItemsSource="{Binding Collections}" 
-                              SelectedItem="{Binding SelectedItem}"
-                              Background="Transparent">
-                        <TreeView.DataTemplates>
-                            <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
-                                <Grid ColumnDefinitions="Auto, *" Background="Transparent">
-                                    <Grid.ContextMenu>
-                                        <ContextMenu>
-                                            <MenuItem Header="Переименовать" 
-                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RenameCollectionCommand}" 
-                                                      CommandParameter="{Binding}">
-                                                <MenuItem.Icon>
-                                                    <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <MenuItem Header="Дублировать" 
-                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DuplicateCollectionCommand}" 
-                                                      CommandParameter="{Binding}">
-                                                <MenuItem.Icon>
-                                                    <ic:SymbolIcon Symbol="Copy" FontSize="16"/>
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <MenuItem Header="Удалить" 
-                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveCollectionCommand}" 
-                                                      CommandParameter="{Binding}">
-                                                <MenuItem.Icon>
-                                                    <ic:SymbolIcon Symbol="Delete" FontSize="16" Foreground="Red"/>
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                        </ContextMenu>
-                                    </Grid.ContextMenu>
-                                    <ic:SymbolIcon Grid.Column="0" Symbol="Folder" FontSize="16" Margin="0,0,8,0" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" 
-                                             VerticalAlignment="Center" Padding="4,0" Margin="0"/>
-                                </Grid>
-                            </TreeDataTemplate>
-                            <DataTemplate DataType="vm:RequestViewModel">
-                                <Grid ColumnDefinitions="Auto, *" Margin="0,2" Background="Transparent">
-                                    <Grid.ContextMenu>
-                                        <ContextMenu>
-                                            <MenuItem Header="Переименовать" 
-                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RenameRequestCommand}" 
-                                                      CommandParameter="{Binding}">
-                                                <MenuItem.Icon>
-                                                    <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <MenuItem Header="Дублировать" 
-                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DuplicateRequestCommand}" 
-                                                      CommandParameter="{Binding}">
-                                                <MenuItem.Icon>
-                                                    <ic:SymbolIcon Symbol="Copy" FontSize="16"/>
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                            <MenuItem Header="Удалить" 
-                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveRequestCommand}" 
-                                                      CommandParameter="{Binding}">
-                                                <MenuItem.Icon>
-                                                    <ic:SymbolIcon Symbol="Delete" FontSize="16" Foreground="Red"/>
-                                                </MenuItem.Icon>
-                                            </MenuItem>
-                                        </ContextMenu>
-                                    </Grid.ContextMenu>
-                                    <TextBlock Grid.Column="0" Text="{Binding Method}" Width="40" FontSize="10" 
-                                               VerticalAlignment="Center" FontWeight="Bold" 
-                                               Foreground="{DynamicResource SystemAccentColor}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" 
-                                               TextTrimming="CharacterEllipsis"/>
-                                </Grid>
-                            </DataTemplate>
-                        </TreeView.DataTemplates>
-                    </TreeView>
-                </Grid>
+                            <TreeView Grid.Row="2" ItemsSource="{Binding Collections}" 
+                                      SelectedItem="{Binding SelectedItem}"
+                                      Background="Transparent" Margin="0,10,0,0">
+                                <TreeView.DataTemplates>
+                                    <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
+                                        <Grid ColumnDefinitions="Auto, *" Background="Transparent">
+                                            <Grid.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Переименовать" 
+                                                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RenameCollectionCommand}" 
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Дублировать" 
+                                                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DuplicateCollectionCommand}" 
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <ic:SymbolIcon Symbol="Copy" FontSize="16"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Удалить" 
+                                                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveCollectionCommand}" 
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <ic:SymbolIcon Symbol="Delete" FontSize="16" Foreground="Red"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Grid.ContextMenu>
+                                            <ic:SymbolIcon Grid.Column="0" Symbol="Folder" FontSize="16" Margin="0,0,8,0" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" 
+                                                     VerticalAlignment="Center" Padding="4,0" Margin="0"/>
+                                        </Grid>
+                                    </TreeDataTemplate>
+                                    <DataTemplate DataType="vm:RequestViewModel">
+                                        <Grid ColumnDefinitions="Auto, *" Margin="0,2" Background="Transparent">
+                                            <Grid.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Переименовать" 
+                                                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RenameRequestCommand}" 
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Дублировать" 
+                                                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DuplicateRequestCommand}" 
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <ic:SymbolIcon Symbol="Copy" FontSize="16"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Удалить" 
+                                                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveRequestCommand}" 
+                                                              CommandParameter="{Binding}">
+                                                        <MenuItem.Icon>
+                                                            <ic:SymbolIcon Symbol="Delete" FontSize="16" Foreground="Red"/>
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Grid.ContextMenu>
+                                            <TextBlock Grid.Column="0" Text="{Binding Method}" Width="40" FontSize="10" 
+                                                       VerticalAlignment="Center" FontWeight="Bold" 
+                                                       Foreground="{DynamicResource SystemAccentColor}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" 
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </TreeView.DataTemplates>
+                            </TreeView>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- History Tab -->
+                    <TabItem>
+                        <TabItem.Header>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ic:SymbolIcon Symbol="History" FontSize="14"/>
+                                <TextBlock Text="История"/>
+                            </StackPanel>
+                        </TabItem.Header>
+                        <Grid RowDefinitions="Auto, *">
+                            <Button Grid.Row="0" Command="{Binding ClearHistoryCommand}" 
+                                    HorizontalAlignment="Right" Margin="12,8" Padding="8,4"
+                                    Background="Transparent" BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <ic:SymbolIcon Symbol="Delete" FontSize="14" Foreground="Red"/>
+                                    <TextBlock Text="Очистить" FontSize="12"/>
+                                </StackPanel>
+                            </Button>
+                            
+                            <ListBox Grid.Row="1" ItemsSource="{Binding History}" 
+                                     SelectedItem="{Binding SelectedItem}"
+                                     Background="Transparent">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto" Margin="0,5">
+                                            <Border Grid.Column="0" Grid.RowSpan="2" 
+                                                    Width="45" Height="30" CornerRadius="4" Margin="0,0,10,0"
+                                                    Background="{Binding StatusCode, Converter={x:Static vm:MainWindowViewModel.StatusToColorConverter}}">
+                                                <TextBlock Text="{Binding StatusCode}" Foreground="White" 
+                                                           VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                                           FontSize="11" FontWeight="Bold"/>
+                                            </Border>
+                                            
+                                            <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                            <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding Method}" Foreground="{DynamicResource SystemAccentColor}" FontSize="11" FontWeight="Bold"/>
+                                                <TextBlock Text="{Binding Timestamp, StringFormat=\{0:HH:mm:ss\}}" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
             </Border>
 
             <!-- Splitter -->
@@ -273,6 +321,7 @@
                                     <TextBlock Grid.Column="0" Text="Название окружения: " VerticalAlignment="Center"/>
                                     <TextBox Grid.Column="1" Text="{Binding CurrentEnvironment.Name}" Margin="10,0,10,0"/>
                                     <Button Grid.Column="2" Command="{Binding RemoveEnvironmentCommand}" 
+                                            CommandParameter="{Binding CurrentEnvironment}"
                                             ToolTip.Tip="Удалить окружение" Background="Transparent" BorderThickness="0">
                                         <ic:SymbolIcon Symbol="Delete" FontSize="18" Foreground="Red"/>
                                     </Button>

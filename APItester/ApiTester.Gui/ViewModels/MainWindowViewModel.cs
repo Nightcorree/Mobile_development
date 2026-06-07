@@ -23,6 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly HttpClientService _httpClientService;
     private const string DefaultCollectionPath = "collections.json";
     private const string DefaultEnvironmentsPath = "environments.json";
+    private const string DefaultHistoryPath = "history.json";
 
     [ObservableProperty]
     private string _requestName = "Новый запрос";
@@ -64,6 +65,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private EnvironmentViewModel? _currentEnvironment;
 
     public ObservableCollection<CollectionViewModel> Collections { get; } = new();
+    public ObservableCollection<HistoryItemViewModel> History { get; } = new();
 
     public static FuncValueConverter<int?, IBrush> StatusToColorConverter { get; } = new(status =>
     {
@@ -132,6 +134,29 @@ public partial class MainWindowViewModel : ViewModelBase
             await SaveCollectionsAsync();
         }
 
+        // Загрузка истории
+        if (File.Exists(DefaultHistoryPath))
+        {
+            try
+            {
+                var json = await File.ReadAllTextAsync(DefaultHistoryPath);
+                var historyModels = JsonSerializer.Deserialize<List<HistoryItemData>>(json);
+                if (historyModels != null)
+                {
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => 
+                    {
+                        foreach (var data in historyModels)
+                        {
+                            var item = new HistoryItemViewModel(data.Request, data.StatusCode);
+                            item.Timestamp = data.Timestamp;
+                            History.Add(item);
+                        }
+                    });
+                }
+            }
+            catch { }
+        }
+
         if (Collections.Count > 0 && Collections[0].Requests.Count > 0)
         {
             SelectedItem = Collections[0].Requests[0];
@@ -158,26 +183,35 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             SelectedRequest = req;
         }
+        else if (value is HistoryItemViewModel hist)
+        {
+            LoadFromRequestModel(hist.OriginalRequest);
+        }
+    }
+
+    private void LoadFromRequestModel(RequestModel model)
+    {
+        RequestName = model.Name;
+        Url = model.Url;
+        Method = model.Method;
+        RequestBody = model.Body;
+        
+        Headers.Clear();
+        foreach (var h in model.Headers)
+        {
+            Headers.Add(new HeaderViewModel { Key = h.Key, Value = h.Value, IsEnabled = true });
+        }
+        if (Headers.Count == 0 || !string.IsNullOrWhiteSpace(Headers.Last().Key))
+        {
+            Headers.Add(new HeaderViewModel());
+        }
     }
 
     partial void OnSelectedRequestChanged(RequestViewModel? value)
     {
         if (value != null)
         {
-            RequestName = value.Name;
-            Url = value.Url;
-            Method = value.Method;
-            RequestBody = value.Body;
-            
-            Headers.Clear();
-            foreach (var h in value.Headers)
-            {
-                Headers.Add(new HeaderViewModel { Key = h.Key, Value = h.Value, IsEnabled = h.IsEnabled });
-            }
-            if (Headers.Count == 0 || !string.IsNullOrWhiteSpace(Headers.Last().Key))
-            {
-                Headers.Add(new HeaderViewModel());
-            }
+            LoadFromRequestModel(value.ToModel());
         }
     }
 
@@ -206,6 +240,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var rawRequest = new RequestModel
         {
+            Name = RequestName,
             Url = Url,
             Method = Method,
             Body = RequestBody,
@@ -236,6 +271,12 @@ public partial class MainWindowViewModel : ViewModelBase
             else { ResponseText = response.Body; }
 
             StatusText = $"Время: {response.ResponseTime.TotalMilliseconds:F0}мс";
+
+            // Добавляем в историю (в начало списка)
+            var historyItem = new HistoryItemViewModel(rawRequest, response.StatusCode);
+            History.Insert(0, historyItem);
+            if (History.Count > 50) History.RemoveAt(History.Count - 1);
+            await SaveHistoryAsync();
         }
         catch (Exception ex)
         {
@@ -408,6 +449,17 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private async Task ClearHistory()
+    {
+        if (await ShowConfirmDialog("Очистить всю историю запросов?"))
+        {
+            History.Clear();
+            await SaveHistoryAsync();
+            StatusText = "История очищена";
+        }
+    }
+
     private async Task<string?> ShowInputDialog(string title, string initialValue, string confirmButtonText)
     {
         var dialog = new Window
@@ -513,6 +565,18 @@ public partial class MainWindowViewModel : ViewModelBase
         await File.WriteAllTextAsync(DefaultEnvironmentsPath, json);
     }
 
+    private async Task SaveHistoryAsync()
+    {
+        var data = History.Select(h => new HistoryItemData 
+        { 
+            Request = h.OriginalRequest, 
+            StatusCode = h.StatusCode, 
+            Timestamp = h.Timestamp 
+        }).ToList();
+        var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(DefaultHistoryPath, json);
+    }
+
     [RelayCommand]
     private async Task AddEnvironment()
     {
@@ -562,4 +626,11 @@ public partial class MainWindowViewModel : ViewModelBase
         await SaveEnvironmentsAsync();
         StatusText = "Окружения сохранены";
     }
+}
+
+public class HistoryItemData
+{
+    public RequestModel Request { get; set; } = null!;
+    public int StatusCode { get; set; }
+    public DateTime Timestamp { get; set; }
 }
