@@ -71,6 +71,35 @@ public class RoadMap
         Height = newHeight;
     }
 
+    public void ShiftAndResize(int newWidth, int newHeight, int shiftX, int shiftY)
+    {
+        var newTiles = new Tile[newWidth, newHeight];
+
+        for (int x = 0; x < newWidth; x++)
+        {
+            for (int y = 0; y < newHeight; y++)
+            {
+                int oldX = x - shiftX;
+                int oldY = y - shiftY;
+
+                if (oldX >= 0 && oldX < Width && oldY >= 0 && oldY < Height)
+                {
+                    newTiles[x, y] = _tiles[oldX, oldY];
+                    newTiles[x, y].X = x;
+                    newTiles[x, y].Y = y;
+                }
+                else
+                {
+                    newTiles[x, y] = new Tile(x, y, TileType.Empty);
+                }
+            }
+        }
+
+        _tiles = newTiles;
+        Width = newWidth;
+        Height = newHeight;
+    }
+
     // Метод для удобного получения всех тайлов (например, для сериализации)
     public IEnumerable<Tile> GetAllTiles()
     {

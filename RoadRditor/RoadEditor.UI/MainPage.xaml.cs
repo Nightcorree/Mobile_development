@@ -187,6 +187,13 @@ public partial class MainPage : ContentPage
         int x2 = (int)MapDrawable.SelectionEnd.Value.X;
         int y2 = (int)MapDrawable.SelectionEnd.Value.Y;
 
+        // Предварительно расширяем карту, чтобы вся область рисования влезла
+        var (sx, sy) = EnsureMapBounds(Math.Min(x1, x2), Math.Min(y1, y2), Math.Max(x1, x2), Math.Max(y1, y2));
+        
+        // Корректируем локальные координаты после возможного сдвига карты
+        x1 += sx; x2 += sx;
+        y1 += sy; y2 += sy;
+
         HashSet<(int x, int y)> affectedTiles = new();
         bool isCtrl = IsCtrlPressed();
 
@@ -259,17 +266,69 @@ public partial class MainPage : ContentPage
 #endif
     }
 
+    private (int shiftX, int shiftY) EnsureMapBounds(int minX, int minY, int maxX, int maxY)
+    {
+        int shiftX = 0;
+        int shiftY = 0;
+        int newWidth = _map.Width;
+        int newHeight = _map.Height;
+
+        // Расширение влево
+        if (minX < 0)
+        {
+            shiftX = Math.Abs(minX) + 5;
+            newWidth += shiftX;
+        }
+        // Расширение вправо
+        if (maxX + shiftX >= newWidth)
+        {
+            newWidth = maxX + shiftX + 6;
+        }
+
+        // Расширение вверх
+        if (minY < 0)
+        {
+            shiftY = Math.Abs(minY) + 5;
+            newHeight += shiftY;
+        }
+        // Расширение вниз
+        if (maxY + shiftY >= newHeight)
+        {
+            newHeight = maxY + shiftY + 6;
+        }
+
+        if (shiftX > 0 || shiftY > 0 || newWidth > _map.Width || newHeight > _map.Height)
+        {
+            _map.ShiftAndResize(newWidth, newHeight, shiftX, shiftY);
+
+            // Корректируем визуальное смещение камеры, чтобы карта не "прыгала"
+            MapDrawable.OffsetX -= shiftX * MapDrawable.TileSize * MapDrawable.Zoom;
+            MapDrawable.OffsetY -= shiftY * MapDrawable.TileSize * MapDrawable.Zoom;
+            
+            // Если мы в режиме выделения, нужно сдвинуть и точки выделения в MapDrawable
+            if (MapDrawable.SelectionStart.HasValue)
+            {
+                var start = MapDrawable.SelectionStart.Value;
+                MapDrawable.SelectionStart = new Point(start.X + shiftX, start.Y + shiftY);
+            }
+            if (MapDrawable.SelectionEnd.HasValue)
+            {
+                var end = MapDrawable.SelectionEnd.Value;
+                MapDrawable.SelectionEnd = new Point(end.X + shiftX, end.Y + shiftY);
+            }
+
+            return (shiftX, shiftY);
+        }
+
+        return (0, 0);
+    }
+
     private void PlaceTile(int x, int y, TileType type, bool updateNeighbors = true)
     {
-        if (x < 0 || y < 0) return;
-
-        // Автоматическое расширение карты, если рисуем за пределами текущих границ
-        if (x >= _map.Width || y >= _map.Height)
-        {
-            int newWidth = Math.Max(_map.Width, x + 5);
-            int newHeight = Math.Max(_map.Height, y + 5);
-            _map.Resize(newWidth, newHeight);
-        }
+        // Проверяем границы для одиночного тайла
+        var (sx, sy) = EnsureMapBounds(x, y, x, y);
+        x += sx;
+        y += sy;
 
         var existingTile = _map.GetTile(x, y);
         if (existingTile == null) return;
@@ -280,7 +339,6 @@ public partial class MainPage : ContentPage
         
         if (updateNeighbors)
         {
-            // Автоматически обновляем соединения для текущего тайла и его соседей
             RoadAutomation.AutoUpdateNeighbors(_map, x, y);
         }
     }
