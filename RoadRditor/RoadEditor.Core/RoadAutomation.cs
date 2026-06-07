@@ -105,26 +105,35 @@ public static class RoadAutomation
 
         Random rand = new();
 
-        // 2. Определение осевых линий с шагом 4
+        // 2. Определение осевых линий с шагом 3 (для большей плотности на малых картах)
         List<int> hLanes = new();
-        for (int y = 2; y < map.Height - 2; y += 4) hLanes.Add(y);
+        for (int y = 1; y < map.Height - 1; y += 3) hLanes.Add(y);
         
         List<int> vLanes = new();
-        for (int x = 2; x < map.Width - 2; x += 4) vLanes.Add(x);
+        for (int x = 1; x < map.Width - 1; x += 3) vLanes.Add(x);
 
         if (hLanes.Count == 0 || vLanes.Count == 0) return;
 
-        // 3. Рисуем начальную сетку
-        foreach (int y in hLanes)
+        // 3. Выбор линий (берем с запасом, чтобы потом проредить)
+        int hCount = Math.Min(hLanes.Count, (int)Math.Sqrt(targetCrossroads) + 3);
+        int vCount = Math.Min(vLanes.Count, (int)Math.Sqrt(targetCrossroads) + 3);
+        
+        var selectedH = hLanes.OrderBy(_ => rand.Next()).Take(hCount).ToList();
+        var selectedV = vLanes.OrderBy(_ => rand.Next()).Take(vCount).ToList();
+
+        // 4. Отрисовка базовой сетки
+        foreach (int y in selectedH)
             for (int x = 0; x < map.Width; x++)
                 map.SetTile(x, y, TileType.RoadHorizontal);
 
-        foreach (int x in vLanes)
+        foreach (int x in selectedV)
             for (int y = 0; y < map.Height; y++)
                 map.SetTile(x, y, TileType.RoadHorizontal);
 
-        // 4. Прореживание до нужного количества перекрестков
-        // Перекресток здесь - это любая точка с 3 или 4 соседями
+        // Сразу чистим тупики, которые могли возникнуть из-за обрывов линий на краях
+        CleanupDeadEnds(map);
+
+        // 5. Прореживание до нужного количества перекрестков
         while (true)
         {
             List<(int x, int y)> crosses = new();
@@ -148,15 +157,13 @@ public static class RoadAutomation
             int dx = dir == 0 ? 1 : (dir == 1 ? -1 : 0);
             int dy = dir == 2 ? 1 : (dir == 3 ? -1 : 0);
             
-            // Удаляем небольшой сегмент, чтобы разорвать связь
             if (cx + dx >= 0 && cx + dx < map.Width && cy + dy >= 0 && cy + dy < map.Height)
                 map.SetTile(cx + dx, cy + dy, TileType.Empty);
             
-            // Сразу запускаем очистку тупиков, чтобы перекрестки пересчитывались корректно
             CleanupDeadEnds(map);
         }
 
-        // 5. Финальное обновление
+        // 6. Финальное обновление
         for (int y = 0; y < map.Height; y++)
             for (int x = 0; x < map.Width; x++)
                 UpdateTileConnections(map, x, y);
@@ -184,12 +191,13 @@ public static class RoadAutomation
                 {
                     if (IsRoad(map, x, y))
                     {
-                        // Плитка является тупиком, если у нее 1 сосед и она НЕ на краю карты
-                        // (дороги на краю карты считаются выездами из города)
                         int neighbors = GetNeighborCount(map, x, y);
                         bool isEdge = (x == 0 || x == map.Width - 1 || y == 0 || y == map.Height - 1);
                         
-                        if (neighbors < 2 && !isEdge)
+                        // Плитка удаляется если:
+                        // 1. У нее вообще нет соседей (изолированная точка)
+                        // 2. У нее 1 сосед и она НЕ на краю (тупик внутри)
+                        if (neighbors == 0 || (neighbors == 1 && !isEdge))
                         {
                             map.SetTile(x, y, TileType.Empty);
                             changed = true;
@@ -199,6 +207,7 @@ public static class RoadAutomation
             }
         }
     }
+
 
 
 
