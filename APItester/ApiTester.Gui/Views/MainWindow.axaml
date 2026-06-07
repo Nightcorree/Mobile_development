@@ -316,12 +316,27 @@
 
                     <!-- Response Section -->
                     <Grid Grid.Row="2" RowDefinitions="Auto, *">
-                        <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,5,0,10">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                        <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto, Auto" Margin="0,5,0,10">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
                                 <ic:SymbolIcon Symbol="History" FontSize="16"/>
                                 <TextBlock Text="Ответ" FontWeight="Bold" FontSize="14"/>
+                                
+                                <!-- Status Code Display -->
+                                <Border IsVisible="{Binding StatusCode, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                        Padding="8,2" CornerRadius="4"
+                                        Background="{Binding StatusCode, Converter={x:Static vm:MainWindowViewModel.StatusToColorConverter}}">
+                                    <TextBlock Text="{Binding StatusCode}" FontWeight="Bold" FontSize="12" Foreground="White"/>
+                                </Border>
+                                
+                                <!-- Response Size Display -->
+                                <TextBlock Text="{Binding ResponseSize}" 
+                                           VerticalAlignment="Center" 
+                                           FontSize="12" 
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                           IsVisible="{Binding ResponseSize, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                             </StackPanel>
-                            <Button Grid.Column="1" Command="{Binding CopyResponseCommand}" 
+                            
+                            <Button Grid.Column="3" Command="{Binding CopyResponseCommand}" 
                                     ToolTip.Tip="Копировать ответ" Padding="8,4" Background="Transparent" BorderThickness="0">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <ic:SymbolIcon Symbol="Copy" FontSize="14"/>

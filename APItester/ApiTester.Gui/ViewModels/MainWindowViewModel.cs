@@ -11,6 +11,8 @@ using ApiTester.Gui.Views;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Data.Converters;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -41,6 +43,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _statusText = "Готов";
 
     [ObservableProperty]
+    private int? _statusCode;
+
+    [ObservableProperty]
+    private string? _responseSize;
+
+    [ObservableProperty]
     private string _searchQuery = string.Empty;
 
     [ObservableProperty]
@@ -56,7 +64,15 @@ public partial class MainWindowViewModel : ViewModelBase
     private EnvironmentViewModel? _currentEnvironment;
 
     public ObservableCollection<CollectionViewModel> Collections { get; } = new();
-    public ObservableCollection<CollectionViewModel> FilteredCollections { get; } = new();
+
+    public static FuncValueConverter<int?, IBrush> StatusToColorConverter { get; } = new(status =>
+    {
+        if (status == null) return Brushes.Transparent;
+        if (status >= 200 && status < 300) return Brushes.Green;
+        if (status >= 400) return Brushes.Red;
+        return Brushes.Orange;
+    });
+
     public ObservableCollection<HeaderViewModel> Headers { get; } = new();
     public ObservableCollection<EnvironmentViewModel> Environments { get; } = new();
     public ObservableCollection<string> Methods { get; } = new() { "GET", "POST", "PUT", "DELETE" };
@@ -78,7 +94,10 @@ public partial class MainWindowViewModel : ViewModelBase
                 var envModels = JsonSerializer.Deserialize<List<EnvironmentModel>>(json);
                 if (envModels != null)
                 {
-                    foreach (var m in envModels) Environments.Add(new EnvironmentViewModel(m));
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => 
+                    {
+                        foreach (var m in envModels) Environments.Add(new EnvironmentViewModel(m));
+                    });
                 }
             }
             catch { }
@@ -113,8 +132,6 @@ public partial class MainWindowViewModel : ViewModelBase
             await SaveCollectionsAsync();
         }
 
-        UpdateFilteredCollections();
-
         if (Collections.Count > 0 && Collections[0].Requests.Count > 0)
         {
             SelectedItem = Collections[0].Requests[0];
@@ -134,34 +151,6 @@ public partial class MainWindowViewModel : ViewModelBase
         };
         Collections.Add(new CollectionViewModel(sampleColl));
     }
-
-    private void UpdateFilteredCollections()
-    {
-        FilteredCollections.Clear();
-        if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            // Чтобы UI всегда видел актуальные данные из Collections
-            foreach (var c in Collections) FilteredCollections.Add(c);
-            return;
-        }
-
-        var query = SearchQuery.ToLower();
-        foreach (var collection in Collections)
-        {
-            var filteredRequests = collection.Requests
-                .Where(r => r.Name.ToLower().Contains(query) || r.Url.ToLower().Contains(query))
-                .ToList();
-
-            if (collection.Name.ToLower().Contains(query) || filteredRequests.Any())
-            {
-                var newColl = new CollectionViewModel(new CollectionModel { Name = collection.Name });
-                foreach (var r in filteredRequests) newColl.Requests.Add(r);
-                FilteredCollections.Add(newColl);
-            }
-        }
-    }
-
-    partial void OnSearchQueryChanged(string value) => UpdateFilteredCollections();
 
     partial void OnSelectedItemChanged(object? value)
     {
@@ -212,6 +201,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IsLoading = true;
         StatusText = "Отправка...";
         ResponseText = string.Empty;
+        StatusCode = null;
+        ResponseSize = null;
 
         var rawRequest = new RequestModel
         {
@@ -228,7 +219,13 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var response = await _httpClientService.SendRequestAsync(processedRequest);
+            StatusCode = response.StatusCode;
             
+            if (response.ContentLength > 1024)
+                ResponseSize = $"{(response.ContentLength / 1024.0):F2} KB";
+            else
+                ResponseSize = $"{response.ContentLength} B";
+
             if (response.ContentType?.Contains("application/json") == true && !string.IsNullOrEmpty(response.Body))
             {
                 try {
@@ -238,12 +235,13 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else { ResponseText = response.Body; }
 
-            StatusText = $"Статус: {response.StatusCode} | Время: {response.ResponseTime.TotalMilliseconds:F0}мс";
+            StatusText = $"Время: {response.ResponseTime.TotalMilliseconds:F0}мс";
         }
         catch (Exception ex)
         {
             ResponseText = $"Ошибка: {ex.Message}";
             StatusText = "Ошибка";
+            StatusCode = 0;
         }
         finally
         {
@@ -259,7 +257,6 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedRequest.UpdateFrom(Url, Method, RequestBody, Headers);
             SelectedRequest.Name = RequestName;
             await SaveCollectionsAsync();
-            UpdateFilteredCollections();
             StatusText = "Успешно сохранено";
         }
     }
@@ -296,11 +293,6 @@ public partial class MainWindowViewModel : ViewModelBase
         targetCollection.IsExpanded = true;
         
         await SaveCollectionsAsync();
-        
-        // ВАЖНО: вызываем обновление только если активен поиск, 
-        // иначе Avalonia может упасть при добавлении в дерево
-        if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
-        
         SelectedItem = newReq;
     }
 
@@ -313,7 +305,6 @@ public partial class MainWindowViewModel : ViewModelBase
             request.Name = result;
             if (SelectedRequest == request) RequestName = result;
             await SaveCollectionsAsync();
-            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
             StatusText = "Запрос переименован";
         }
     }
@@ -374,7 +365,6 @@ public partial class MainWindowViewModel : ViewModelBase
                     collection.Requests.Remove(request);
                     if (SelectedRequest == request) SelectedItem = null;
                     await SaveCollectionsAsync();
-                    if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
                     StatusText = "Запрос удален";
                     break;
                 }
@@ -391,7 +381,6 @@ public partial class MainWindowViewModel : ViewModelBase
             var newColl = new CollectionViewModel(new CollectionModel { Name = result });
             Collections.Add(newColl);
             await SaveCollectionsAsync();
-            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
             SelectedItem = newColl;
         }
     }
@@ -404,7 +393,6 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             collection.Name = result;
             await SaveCollectionsAsync();
-            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
             StatusText = "Коллекция переименована";
         }
     }
@@ -416,7 +404,6 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Collections.Remove(collection);
             await SaveCollectionsAsync();
-            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
             StatusText = "Коллекция удалена";
         }
     }
@@ -512,7 +499,7 @@ public partial class MainWindowViewModel : ViewModelBase
         return dialogResult;
     }
 
-    private async Task SaveCollectionsAsync()
+    public async Task SaveCollectionsAsync()
     {
         var models = Collections.Select(c => c.ToModel()).ToList();
         var json = JsonSerializer.Serialize(models, new JsonSerializerOptions { WriteIndented = true });
