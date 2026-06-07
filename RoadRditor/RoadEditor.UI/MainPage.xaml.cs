@@ -457,4 +457,52 @@ public partial class MainPage : ContentPage
 
     private Task<string> ShowActionSheetAsync(string title, string cancel, string destruction, params string[] buttons) =>
         MainThread.InvokeOnMainThreadAsync(() => DisplayActionSheet(title, cancel, destruction, buttons));
+
+    private void OnOpenGeneratorClicked(object? sender, EventArgs e)
+    {
+        GeneratorOverlay.IsVisible = true;
+    }
+
+    private void OnCancelGeneration(object? sender, EventArgs e)
+    {
+        GeneratorOverlay.IsVisible = false;
+    }
+
+    private async void OnGenerateRoadConfirmed(object? sender, EventArgs e)
+    {
+        bool wOk = int.TryParse(GenWidthEntry.Text, out int w) && w > 0;
+        bool hOk = int.TryParse(GenHeightEntry.Text, out int h) && h > 0;
+        bool cOk = int.TryParse(GenCrossroadsEntry.Text, out int crossroads) && crossroads >= 0;
+
+        if (!wOk || !hOk || !cOk)
+        {
+            await DisplayAlert("Ошибка", "Пожалуйста, введите корректные целые положительные числа.", "OK");
+            return;
+        }
+
+        // Ограничение размером видимого холста (с запасом)
+        // Если холст еще не проинициализирован (0), используем 50 как дефолт
+        int maxW = MapGraphicsView.Width > 0 ? (int)(MapGraphicsView.Width / MapDrawable.TileSize) * 2 : 50;
+        int maxH = MapGraphicsView.Height > 0 ? (int)(MapGraphicsView.Height / MapDrawable.TileSize) * 2 : 50;
+
+        if (w > maxW || h > maxH)
+        {
+            await DisplayAlert("Ошибка", $"Размер слишком велик. Для текущего холста максимум: {maxW}x{maxH}", "OK");
+            return;
+        }
+
+        GeneratorOverlay.IsVisible = false;
+        GenerateRandomRoad(w, h, crossroads);
+    }
+
+    private void GenerateRandomRoad(int w, int h, int crossroads)
+    {
+        _map = new RoadMap(w, h);
+        MapDrawable.Map = _map;
+        
+        RoadAutomation.GenerateRandomRoad(_map, crossroads);
+        
+        MapGraphicsView.Invalidate();
+        CenterMap();
+    }
 }

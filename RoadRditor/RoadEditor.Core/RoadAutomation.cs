@@ -95,4 +95,128 @@ public static class RoadAutomation
         UpdateTileConnections(map, x - 1, y);
         UpdateTileConnections(map, x + 1, y);
     }
+
+    public static void GenerateRandomRoad(RoadMap map, int targetCrossroads)
+    {
+        // 1. Полная очистка карты
+        for (int y = 0; y < map.Height; y++)
+            for (int x = 0; x < map.Width; x++)
+                map.SetTile(x, y, TileType.Empty);
+
+        Random rand = new();
+
+        // 2. Определение осевых линий с шагом 4
+        List<int> hLanes = new();
+        for (int y = 2; y < map.Height - 2; y += 4) hLanes.Add(y);
+        
+        List<int> vLanes = new();
+        for (int x = 2; x < map.Width - 2; x += 4) vLanes.Add(x);
+
+        if (hLanes.Count == 0 || vLanes.Count == 0) return;
+
+        // 3. Рисуем начальную сетку
+        foreach (int y in hLanes)
+            for (int x = 0; x < map.Width; x++)
+                map.SetTile(x, y, TileType.RoadHorizontal);
+
+        foreach (int x in vLanes)
+            for (int y = 0; y < map.Height; y++)
+                map.SetTile(x, y, TileType.RoadHorizontal);
+
+        // 4. Прореживание до нужного количества перекрестков
+        // Перекресток здесь - это любая точка с 3 или 4 соседями
+        while (true)
+        {
+            List<(int x, int y)> crosses = new();
+            for (int y = 0; y < map.Height; y++)
+            {
+                for (int x = 0; x < map.Width; x++)
+                {
+                    if (IsRoad(map, x, y))
+                    {
+                        int neighbors = GetNeighborCount(map, x, y);
+                        if (neighbors >= 3) crosses.Add((x, y));
+                    }
+                }
+            }
+
+            if (crosses.Count <= targetCrossroads) break;
+
+            // Выбираем случайный перекресток и разрываем одну связь
+            var (cx, cy) = crosses[rand.Next(crosses.Count)];
+            int dir = rand.Next(4);
+            int dx = dir == 0 ? 1 : (dir == 1 ? -1 : 0);
+            int dy = dir == 2 ? 1 : (dir == 3 ? -1 : 0);
+            
+            // Удаляем небольшой сегмент, чтобы разорвать связь
+            if (cx + dx >= 0 && cx + dx < map.Width && cy + dy >= 0 && cy + dy < map.Height)
+                map.SetTile(cx + dx, cy + dy, TileType.Empty);
+            
+            // Сразу запускаем очистку тупиков, чтобы перекрестки пересчитывались корректно
+            CleanupDeadEnds(map);
+        }
+
+        // 5. Финальное обновление
+        for (int y = 0; y < map.Height; y++)
+            for (int x = 0; x < map.Width; x++)
+                UpdateTileConnections(map, x, y);
+    }
+
+    private static int GetNeighborCount(RoadMap map, int x, int y)
+    {
+        int count = 0;
+        if (IsRoad(map, x, y - 1)) count++;
+        if (IsRoad(map, x, y + 1)) count++;
+        if (IsRoad(map, x - 1, y)) count++;
+        if (IsRoad(map, x + 1, y)) count++;
+        return count;
+    }
+
+    private static void CleanupDeadEnds(RoadMap map)
+    {
+        bool changed = true;
+        while (changed)
+        {
+            changed = false;
+            for (int y = 0; y < map.Height; y++)
+            {
+                for (int x = 0; x < map.Width; x++)
+                {
+                    if (IsRoad(map, x, y))
+                    {
+                        // Плитка является тупиком, если у нее 1 сосед и она НЕ на краю карты
+                        // (дороги на краю карты считаются выездами из города)
+                        int neighbors = GetNeighborCount(map, x, y);
+                        bool isEdge = (x == 0 || x == map.Width - 1 || y == 0 || y == map.Height - 1);
+                        
+                        if (neighbors < 2 && !isEdge)
+                        {
+                            map.SetTile(x, y, TileType.Empty);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    private static void ConnectPoints(RoadMap map, (int x, int y) p1, (int x, int y) p2)
+    {
+        int cx = p1.x;
+        int cy = p1.y;
+
+        while (cx != p2.x)
+        {
+            map.SetTile(cx, cy, TileType.RoadHorizontal);
+            cx += Math.Sign(p2.x - cx);
+        }
+        while (cy != p2.y)
+        {
+            map.SetTile(cx, cy, TileType.RoadHorizontal);
+            cy += Math.Sign(p2.y - cy);
+        }
+        map.SetTile(p2.x, p2.y, TileType.RoadHorizontal);
+    }
 }
