@@ -485,26 +485,41 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task AddEnvironment()
     {
-        var newEnv = new EnvironmentViewModel(new EnvironmentModel { Name = "Новое окружение" });
+        var result = await ShowInputDialog("Новое окружение", "", "Создать");
+        if (string.IsNullOrWhiteSpace(result)) return;
+
+        var newEnv = new EnvironmentViewModel(new EnvironmentModel { Name = result });
         Environments.Add(newEnv);
         CurrentEnvironment = newEnv;
         await SaveEnvironmentsAsync();
     }
 
     [RelayCommand]
-    private async Task RemoveEnvironment()
+    private async Task RenameEnvironment(EnvironmentViewModel environment)
     {
-        if (CurrentEnvironment == null || Environments.Count <= 1)
+        var result = await ShowInputDialog("Переименовать окружение", environment.Name, "Сохранить");
+        if (!string.IsNullOrWhiteSpace(result))
+        {
+            environment.Name = result;
+            await SaveEnvironmentsAsync();
+            StatusText = "Окружение переименовано";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RemoveEnvironment(EnvironmentViewModel environment)
+    {
+        if (Environments.Count <= 1)
         {
             StatusText = "Нельзя удалить последнее окружение";
             return;
         }
 
-        if (await ShowConfirmDialog($"Удалить окружение \"{CurrentEnvironment.Name}\"?"))
+        if (await ShowConfirmDialog($"Вы точно хотите удалить окружение \"{environment.Name}\"?"))
         {
-            var toRemove = CurrentEnvironment;
-            Environments.Remove(toRemove);
-            CurrentEnvironment = Environments.First();
+            var isCurrent = CurrentEnvironment == environment;
+            Environments.Remove(environment);
+            if (isCurrent) CurrentEnvironment = Environments.First();
             await SaveEnvironmentsAsync();
             StatusText = "Окружение удалено";
         }

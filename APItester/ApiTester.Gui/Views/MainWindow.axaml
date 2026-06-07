@@ -52,7 +52,26 @@
                     <ComboBox ItemsSource="{Binding Environments}" SelectedItem="{Binding CurrentEnvironment}" Width="200">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}"/>
+                                <TextBlock Text="{Binding Name}">
+                                    <TextBlock.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Переименовать" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RenameEnvironmentCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Удалить" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveEnvironmentCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Delete" FontSize="16" Foreground="Red"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </TextBlock.ContextMenu>
+                                </TextBlock>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
