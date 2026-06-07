@@ -91,39 +91,60 @@
                         </TextBox.InnerLeftContent>
                     </TextBox>
                     
-                    <TreeView Grid.Row="3" ItemsSource="{Binding FilteredCollections}" 
+                    <TreeView Grid.Row="3" ItemsSource="{Binding Collections}" 
                               SelectedItem="{Binding SelectedItem}"
                               Background="Transparent">
                         <TreeView.DataTemplates>
                             <TreeDataTemplate DataType="vm:CollectionViewModel" ItemsSource="{Binding Requests}">
-                                <Grid ColumnDefinitions="Auto, *, Auto">
+                                <Grid ColumnDefinitions="Auto, *" Background="Transparent">
+                                    <Grid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Переименовать" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RenameCollectionCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Удалить" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveCollectionCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Delete" FontSize="16" Foreground="Red"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Grid.ContextMenu>
                                     <ic:SymbolIcon Grid.Column="0" Symbol="Folder" FontSize="16" Margin="0,0,8,0" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" 
-                                             VerticalAlignment="Center" VerticalContentAlignment="Center"
-                                             Background="Transparent" BorderThickness="0" 
-                                             Padding="4,0" Margin="0" MinHeight="0"/>
-                                    <Button Grid.Column="2" 
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveCollectionCommand}" 
-                                            CommandParameter="{Binding}"
-                                            Padding="4" Background="Transparent" BorderThickness="0">
-                                        <ic:SymbolIcon Symbol="Delete" FontSize="14" Foreground="Red" Opacity="0.6"/>
-                                    </Button>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" 
+                                             VerticalAlignment="Center" Padding="4,0" Margin="0"/>
                                 </Grid>
                             </TreeDataTemplate>
                             <DataTemplate DataType="vm:RequestViewModel">
-                                <Grid ColumnDefinitions="Auto, *, Auto" Margin="0,2">
+                                <Grid ColumnDefinitions="Auto, *" Margin="0,2" Background="Transparent">
+                                    <Grid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Переименовать" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RenameRequestCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Edit" FontSize="16"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Удалить" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveRequestCommand}" 
+                                                      CommandParameter="{Binding}">
+                                                <MenuItem.Icon>
+                                                    <ic:SymbolIcon Symbol="Delete" FontSize="16" Foreground="Red"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Grid.ContextMenu>
                                     <TextBlock Grid.Column="0" Text="{Binding Method}" Width="40" FontSize="10" 
                                                VerticalAlignment="Center" FontWeight="Bold" 
                                                Foreground="{DynamicResource SystemAccentColor}"/>
                                     <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" 
                                                TextTrimming="CharacterEllipsis"/>
-                                    <Button Grid.Column="2" 
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemoveRequestCommand}" 
-                                            CommandParameter="{Binding}"
-                                            Padding="4" Background="Transparent" BorderThickness="0"
-                                            ToolTip.Tip="Удалить запрос">
-                                        <ic:SymbolIcon Symbol="Delete" FontSize="14" Foreground="Red"/>
-                                    </Button>
                                 </Grid>
                             </DataTemplate>
                         </TreeView.DataTemplates>

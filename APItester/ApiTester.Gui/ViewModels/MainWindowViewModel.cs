@@ -140,6 +140,7 @@ public partial class MainWindowViewModel : ViewModelBase
         FilteredCollections.Clear();
         if (string.IsNullOrWhiteSpace(SearchQuery))
         {
+            // Чтобы UI всегда видел актуальные данные из Collections
             foreach (var c in Collections) FilteredCollections.Add(c);
             return;
         }
@@ -266,6 +267,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task AddRequest()
     {
+        var result = await ShowInputDialog("Новый запрос", "", "Создать");
+        if (string.IsNullOrWhiteSpace(result)) return;
+
         CollectionViewModel? targetCollection = null;
 
         if (SelectedItem is CollectionViewModel coll)
@@ -281,15 +285,37 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (targetCollection == null)
         {
-            targetCollection = new CollectionViewModel(new CollectionModel { Name = "Новая коллекция" });
+            var collName = await ShowInputDialog("Новая коллекция", "Моя коллекция", "Создать");
+            if (string.IsNullOrWhiteSpace(collName)) return;
+            targetCollection = new CollectionViewModel(new CollectionModel { Name = collName });
             Collections.Add(targetCollection);
         }
         
-        var newReq = new RequestViewModel(new RequestModel { Name = "Новый запрос", Method = "GET", Url = "https://" });
+        var newReq = new RequestViewModel(new RequestModel { Name = result, Method = "GET", Url = "https://" });
         targetCollection.Requests.Add(newReq);
-        SelectedItem = newReq;
+        targetCollection.IsExpanded = true;
+        
         await SaveCollectionsAsync();
-        UpdateFilteredCollections();
+        
+        // ВАЖНО: вызываем обновление только если активен поиск, 
+        // иначе Avalonia может упасть при добавлении в дерево
+        if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
+        
+        SelectedItem = newReq;
+    }
+
+    [RelayCommand]
+    private async Task RenameRequest(RequestViewModel request)
+    {
+        var result = await ShowInputDialog("Переименовать запрос", request.Name, "Сохранить");
+        if (!string.IsNullOrWhiteSpace(result))
+        {
+            request.Name = result;
+            if (SelectedRequest == request) RequestName = result;
+            await SaveCollectionsAsync();
+            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
+            StatusText = "Запрос переименован";
+        }
     }
 
     [RelayCommand]
@@ -304,7 +330,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     collection.Requests.Remove(request);
                     if (SelectedRequest == request) SelectedItem = null;
                     await SaveCollectionsAsync();
-                    UpdateFilteredCollections();
+                    if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
                     StatusText = "Запрос удален";
                     break;
                 }
@@ -315,11 +341,28 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task AddCollection()
     {
-        var newColl = new CollectionViewModel(new CollectionModel { Name = "Новая коллекция" });
-        Collections.Add(newColl);
-        SelectedItem = newColl;
-        await SaveCollectionsAsync();
-        UpdateFilteredCollections();
+        var result = await ShowInputDialog("Новая коллекция", "", "Создать");
+        if (!string.IsNullOrWhiteSpace(result))
+        {
+            var newColl = new CollectionViewModel(new CollectionModel { Name = result });
+            Collections.Add(newColl);
+            await SaveCollectionsAsync();
+            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
+            SelectedItem = newColl;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RenameCollection(CollectionViewModel collection)
+    {
+        var result = await ShowInputDialog("Переименовать коллекцию", collection.Name, "Сохранить");
+        if (!string.IsNullOrWhiteSpace(result))
+        {
+            collection.Name = result;
+            await SaveCollectionsAsync();
+            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
+            StatusText = "Коллекция переименована";
+        }
     }
 
     [RelayCommand]
@@ -329,9 +372,51 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Collections.Remove(collection);
             await SaveCollectionsAsync();
-            UpdateFilteredCollections();
+            if (!string.IsNullOrWhiteSpace(SearchQuery)) UpdateFilteredCollections();
             StatusText = "Коллекция удалена";
         }
+    }
+
+    private async Task<string?> ShowInputDialog(string title, string initialValue, string confirmButtonText)
+    {
+        var dialog = new Window
+        {
+            Title = title,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            SystemDecorations = SystemDecorations.None,
+            TransparencyLevelHint = new[] { WindowTransparencyLevel.AcrylicBlur },
+            Background = Avalonia.Media.Brushes.Transparent
+        };
+
+        var control = new InputDialog();
+        var titleBlock = control.FindControl<TextBlock>("TitleText");
+        if (titleBlock != null) titleBlock.Text = title;
+
+        var inputTextBox = control.FindControl<TextBox>("InputTextBox");
+        if (inputTextBox != null) inputTextBox.Text = initialValue;
+
+        var btnCancel = control.FindControl<Button>("CancelButton");
+        var btnConfirm = control.FindControl<Button>("ConfirmButton");
+        if (btnConfirm != null) btnConfirm.Content = confirmButtonText;
+
+        string? result = null;
+        if (btnCancel != null) btnCancel.Click += (_, _) => dialog.Close(null);
+        if (btnConfirm != null) btnConfirm.Click += (_, _) => 
+        {
+            result = inputTextBox?.Text;
+            dialog.Close(result);
+        };
+
+        dialog.Content = control;
+
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            return await dialog.ShowDialog<string?>(desktop.MainWindow!);
+        }
+
+        return null;
     }
 
     [RelayCommand]

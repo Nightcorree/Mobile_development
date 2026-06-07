@@ -13,6 +13,9 @@ public partial class CollectionViewModel : ViewModelBase
     [ObservableProperty]
     private string _name;
 
+    [ObservableProperty]
+    private bool _isExpanded;
+
     public ObservableCollection<RequestViewModel> Requests { get; } = new();
 
     public CollectionViewModel(CollectionModel model)

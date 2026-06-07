@@ -1,39 +1,23 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ApiTester.Gui.Views.ConfirmDialog">
-    <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
-            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
-            BorderThickness="1" 
-            CornerRadius="8" 
-            Padding="25">
-        <StackPanel Spacing="25" Width="350">
+    <Border Padding="24" 
+            Background="#1E1E1E" 
+            BorderBrush="{DynamicResource SystemAccentColor}"
+            BorderThickness="2"
+            CornerRadius="12"
+            BoxShadow="0 10 40 0 #A0000000">
+        <StackPanel Spacing="20" Width="350">
+            <TextBlock Text="Подтверждение" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource SystemAccentColor}"/>
+            
             <TextBlock Name="MessageText" 
                        TextWrapping="Wrap" 
                        FontSize="15" 
-                       HorizontalAlignment="Center" 
-                       TextAlignment="Center"
                        Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
             
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
-                <Button Name="CancelButton" 
-                        Content="Отмена" 
-                        Width="120" 
-                        HorizontalContentAlignment="Center" 
-                        Padding="0,8"/>
-                <Button Name="ConfirmButton" 
-                        Content="Удалить" 
-                        Width="120" 
-                        HorizontalContentAlignment="Center" 
-                        Padding="0,8"
-                        Background="#E81123" 
-                        Foreground="White">
-                    <Button.Styles>
-                        <Style Selector="Button:pointerover /template/ ContentPresenter">
-                            <Setter Property="Background" Value="#FF4343"/>
-                            <Setter Property="Foreground" Value="White"/>
-                        </Style>
-                    </Button.Styles>
-                </Button>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,5,0,0">
+                <Button Name="CancelButton" Content="Отмена" Width="100" HorizontalContentAlignment="Center" Padding="0,8"/>
+                <Button Name="ConfirmButton" Content="Да" Width="100" HorizontalContentAlignment="Center" Padding="0,8" Classes="accent"/>
             </StackPanel>
         </StackPanel>
     </Border>
