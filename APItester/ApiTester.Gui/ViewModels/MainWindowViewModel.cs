@@ -265,7 +265,12 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 try {
                     var obj = JsonSerializer.Deserialize<JsonElement>(response.Body);
-                    ResponseText = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+                    var options = new JsonSerializerOptions 
+                    { 
+                        WriteIndented = true,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    };
+                    ResponseText = JsonSerializer.Serialize(obj, options);
                 } catch { ResponseText = response.Body; }
             }
             else { ResponseText = response.Body; }

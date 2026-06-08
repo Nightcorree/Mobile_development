@@ -14,7 +14,7 @@ public static class VariableProcessor
 
         return VariableRegex.Replace(input, match =>
         {
-            var key = match.Groups[1].Value;
+            var key = match.Groups[1].Value.Trim();
             
             if (key.StartsWith("$"))
             {
